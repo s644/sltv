@@ -5,6 +5,7 @@
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/
+// @license      https://creativecommons.org/licenses/by-nc-sa/4.0/
 // ==/UserScript==
 
 (function() {
