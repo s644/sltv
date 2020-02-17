@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    http://tampermonkey.net/
-// @version      0.1
+// @version      0.2
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/
