@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.61
+// @version      0.62
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -19,7 +19,7 @@
     var origTitle = document.title;
 
 
-    var urlRegex = /((?:(?:ht|f)tp(?:s?)\:\/\/|~\/|\/)?(?:\w+:\w+@)?((?:(?:[-\w\d{1-3}]+\.)+(?:com|org|live|net|gov|mil|biz|info|mobi|name|aero|jobs|edu|co\.uk|ac\.uk|it|fr|tv|museum|asia|local|travel|[a-z]{2}))|((\b25[0-5]\b|\b[2][0-4][0-9]\b|\b[0-1]?[0-9]?[0-9]\b)(\.(\b25[0-5]\b|\b[2][0-4][0-9]\b|\b[0-1]?[0-9]?[0-9]\b)){3}))(?::[\d]{1,5})?(?:(?:(?:\/(?:[-\w~!$+|.,=]|%[a-f\d]{2})+)+|\/)+|\?|#)?(?:(?:\?(?:[-\w~!$+|.,*:]|%[a-f\d{2}])+=?(?:[-\w~!$+|.,*:=]|%[a-f\d]{2})*)(?:&(?:[-\w~!$+|.,*:]|%[a-f\d{2}])+=?(?:[-\w~!$+|.,*:=]|%[a-f\d]{2})*)*)*(?:#(?:[-\w~!$ |\/.,*:;=]|%[a-f\d]{2})*)?)/
+    var urlRegex = /(https?:\/\/)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[-zA-Z0-9()]{1,6}\b([äüößÄÜÖa-a-zA-Z0-9()@:%_\+.~#?&//=]*)/i
     // get nick name
     var user = document.getElementsByClassName("nicknamenangabe")[0].innerHTML;
 
@@ -83,11 +83,10 @@
                         var urlMatch = text.match(urlRegex);
 
                         if(urlMatch) {
-
-                            if(/https?/.test(urlMatch[1])) {
-                                text = text.replace(urlRegex,"<a href=\"$1\" target=\"_blank\">$2</a>");
+                            if(/https?/.test(urlMatch[0])) {
+                                text = text.replace(urlRegex,"<a href=\""+urlMatch[0]+"\" target=\"_blank\">"+urlMatch[0]+"</a>");
                             } else {
-                                text = text.replace(urlRegex,"<a href=\"http://$1\" target=\"_blank\">$2</a>");
+                                text = text.replace(urlRegex,"<a href=\"http://"+urlMatch[0]+"\" target=\"_blank\">"+urlMatch[0]+"</a>");
                             }
                         }
 
