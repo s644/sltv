@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.62
+// @version      0.63
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -19,7 +19,7 @@
     var origTitle = document.title;
 
 
-    var urlRegex = /(https?:\/\/)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[-zA-Z0-9()]{1,6}\b([äüößÄÜÖa-a-zA-Z0-9()@:%_\+.~#?&//=]*)/i
+    var urlRegex = /(https?:\/\/)?[-a-zA-Z0-9@:%_\+~#=]{1,256}\.[-zA-Z0-9()]{1,6}\b([äüößÄÜÖa-a-zA-Z0-9()@:%_\+.~#?&//=]*)/i
     // get nick name
     var user = document.getElementsByClassName("nicknamenangabe")[0].innerHTML;
 
