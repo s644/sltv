@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
-// @namespace    http://tampermonkey.net/
-// @version      0.51
+// @namespace    https://github.com/s644/sltv
+// @version      0.60
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -13,19 +13,18 @@
 
 (function() {
     //'use strict';
-    
+
     var unread = 0;
     var unreadPriority = 0;
     var origTitle = document.title;
 
 
-    var urlRegex = /((?:(?:ht|f)tp(?:s?)\:\/\/|~\/|\/)?(?:\w+:\w+@)?((?:(?:[-\w\d{1-3}]+\.)+(?:com|org|live|net|gov|mil|biz|info|mobi|name|aero|jobs|edu|co\.uk|ac\.uk|it|fr|tv|museum|asia|local|travel|[a-z]{2}))|((\b25[0-5]\b|\b[2][0-4][0-9]\b|\b[0-1]?[0-9]?[0-9]\b)(\.(\b25[0-5]\b|\b[2][0-4][0-9]\b|\b[0-1]?[0-9]?[0-9]\b)){3}))(?::[\d]{1,5})?(?:(?:(?:\/(?:[-\w~!$+|.,=]|%[a-f\d]{2})+)+|\/)+|\?|#)?(?:(?:\?(?:[-\w~!$+|.,*:]|%[a-f\d{2}])+=?(?:[-\w~!$+|.,*:=]|%[a-f\d]{2})*)(?:&(?:[-\w~!$+|.,*:]|%[a-f\d{2}])+=?(?:[-\w~!$+|.,*:=]|%[a-f\d]{2})*)*)*(?:#(?:[-\w~!$ |\/.,*:;=]|%[a-f\d]{2})*)?)/
-    // get nick name
+    var urlRegex = /((?:(?:ht|f)tp(?:s?)\:\/\/|~\/|\/)?(?:\w+:\w+@)?((?:(?:[-\w\d{1-3}]+\.)+(?:com|org|live|net|gov|mil|biz|info|mobi|name|aero|jobs|edu|co\.uk|ac\.uk|it|fr|tv|museum|asia|local|travel|[a-z]{2}))|((\b25[0-5]\b|\b[2][0-4][0-9]\b|\b[0-1]?[0-9]?[0-9]\b)(\.(\b25[0-5]\b|\b[2][0-4][0-9]\b|\b[0-1]?[0-9]?[0-9]\b)){3}))(?::[\d]{1,5})?(?:(?:(?:\/(?:[-\w~!$+|.,=]|%[a-f\d]{2})+)+|\/)+|\?|#)?(?:(?:\?(?:[-\w~!$+|.,*:]|%[a-f\d{2}])+=?(?:[-\w~!$+|.,*:=]|%[a-f\d]{2})*)(?:&(?:[-\w~!$+|.,*:]|%[a-f\d{2}])+=?(?:[-\w~!$+|.,*:=]|%[a-f\d]{2})*)*)*(?:#(?:[-\w~!$ |\/.,*:;=]|%[a-f\d]{2})*)?)/    // get nick name
     var user = document.getElementsByClassName("nicknamenangabe")[0].innerHTML;
-    
+
     var chat = document.querySelector('div#chatinhalt');
 
-    // style fix 
+    // style fix
     chat.style.marginTop = "-15px";
 
     //observer chatlist
@@ -58,7 +57,15 @@
                 mutation.addedNodes.forEach(function(node, i) {
 
                     // delete original node...
-                    mutation.target.removeChild(mutation.addedNodes[i]);
+                    if(mutation.target.contains(node)) {
+                        // under 80 messages
+                        mutation.target.removeChild(node);
+                    } else {
+                        // over 80 message
+                        while (chat.lastChild && chat.lastChild.nodeName !== "DIV") {
+                            chat.removeChild(chat.lastChild);
+                        }
+                    }
 
                     // ..and create a new one
                     if(node.nodeName === "#text") {
@@ -71,12 +78,25 @@
                             unreadPriority++;
                         }
 
+                        var text = node.data.replace("@" + user, '<span class="badge">' + user + '</span>');
+                        var urlMatch = text.match(urlRegex);
+
+                        if(urlMatch) {
+
+                            if(/https?/.test(urlMatch[1])) {
+                                text = text.replace(urlRegex,"<a href=\"$1\" target=\"_blank\">$2</a>");
+                            } else {
+                                text = text.replace(urlRegex,"<a href=\"http://$1\" target=\"_blank\">$2</a>");
+                            }
+                        }
+
                         // highlight my user name
-                        wrapNode.innerHTML = node.data.replace("@" + user, '<span class="badge">' + user + '</span>').replace(urlRegex,"<a href=\"$1\" target=\"_blank\">$2</a>");
+                        wrapNode.innerHTML = text;
                         msg.appendChild(wrapNode);
-                    } else {
+                    } else if(node.nodeName !== "BR") {
                         msg.appendChild(node);
                     }
+
                 });
 
                 // append our message container
