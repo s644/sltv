@@ -19,7 +19,7 @@
     var origTitle = document.title;
 
 
-    var urlRegex = /(https?:\/\/)?[-a-zA-Z0-9@:%_\+~#=]{1,256}\.[-zA-Z0-9()]{1,6}\b([äüößÄÜÖa-a-zA-Z0-9()@:%_\+.~#?&//=]*)/i
+    var urlRegex = /(https?:\/\/)?[-a-zA-Z0-9@:%_\+~#=]{1,256}\.[-zA-Z0-9()]{2,6}\b([äüößÄÜÖa-a-zA-Z0-9()@:%_\+.~#?&//=]*)/i
     // get nick name
     var user = document.getElementsByClassName("nicknamenangabe")[0].innerHTML;
 
