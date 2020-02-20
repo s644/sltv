@@ -1,5 +1,7 @@
 # Simple Chat Enhancer for Skylinetv.live
 
+# [>> Click to install <<](https://github.com/s644/sltv/raw/master/stvl_simple_chat_enhancer.user.js)
+
 This script has the following features:
 
 * it allows you to click on usernames to insert a @username handle into the text input
