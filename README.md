@@ -8,6 +8,7 @@ This script has the following features:
 * usernames with bad contrast are brightened up
 * shows unread messages in tab title if tab is unfocused
 * hide youtube/twitch/bot/guest messages
+* define your own keywords to search for
 * save personal settings
 
 
