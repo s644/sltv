@@ -61,9 +61,9 @@
     document.body.appendChild(style);
 
     // option container
-    var specialNicks = ["fa-youtube","fa-twitch","fa-robot"];
-    var specialClass = ["ytMsg","twitMsg","botMsg"];
-    var specialNames = ["Youtube","Twitch","Bot"];
+    var specialNicks = ["fa-youtube","fa-twitch","fa-robot","fa-pray"];
+    var specialClass = ["ytMsg","twitMsg","botMsg","guestMsg"];
+    var specialNames = ["Youtube","Twitch","Bot","Gast"];
     var specialOptions = [];
 
     var optionDiv = document.createElement('div');
@@ -74,7 +74,7 @@
     specialNicks.forEach(function(nickType,i) {
         var icon = document.createElement('i');
         specialOptions[i] = GM_getValue("show" + specialClass[i].ucFirst(),true);
-        icon.classList.add("hand","fa",nickType);
+        icon.classList.add("hand",i<2?"fa":"fas",nickType);
         icon.dataset.tgl = specialClass[i];
         icon.dataset.set = specialOptions[i];
         icon.id = "tgl" + specialClass[i].ucFirst();
@@ -155,6 +155,9 @@
                 } else if(nickNode.getElementsByClassName("fa-robot").length) {
                     msg.classList.add("botMsg");
                     specialNick = 2;
+                } else if(/^Gast\d{1,4}$/m.test(nickNode.innerText)) {
+                    msg.classList.add("guestMsg");
+                    specialNick = 3;
                 }
 
                 // hide filtered messages
