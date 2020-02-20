@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.80
+// @version      0.81
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -49,6 +49,23 @@
         return this;
     }
 
+    // detect saving support
+    var isTampermonkey = (typeof GM_getValue === "function");
+    var showWarning = true;
+
+    function setValue(name, value) {
+        if(isTampermonkey) {
+            GM_setValue(name, value);
+        } else if(showWarning) {
+            alert("Your addon doesn't support saving, however you can use this function until reloading the page :(\n\nConsider using https://www.tampermonkey.net/ for full support!");
+            showWarning = false;
+        }
+    }
+
+    function getValue(name, def) {
+      	return isTampermonkey ? GM_getValue(name, def):def;
+    }
+
     var urlRegex = /((?:(http|https|Http|Https|rtsp|Rtsp):\/\/(?:(?:[a-zA-Z0-9\$\-\_\.\+\!\*\'\(\)\,\;\?\&\=]|(?:\%[a-fA-F0-9]{2})){1,64}(?:\:(?:[a-zA-Z0-9\$\-\_\.\+\!\*\'\(\)\,\;\?\&\=]|(?:\%[a-fA-F0-9]{2})){1,25})?\@)?)?((?:(?:[a-zA-Z0-9][a-zA-Z0-9\-]{0,64}\.)+(?:(?:aero|live|arpa|asia|a[cdefgilmnoqrstuwxz])|(?:biz|b[abdefghijmnorstvwyz])|(?:cat|com|coop|c[acdfghiklmnoruvxyz])|d[ejkmoz]|(?:edu|e[cegrstu])|f[ijkmor]|(?:gov|g[abdefghilmnpqrstuwy])|h[kmnrtu]|(?:info|int|i[delmnoqrst])|(?:jobs|j[emop])|k[eghimnrwyz]|l[abcikrstuvy]|(?:mil|mobi|museum|m[acdghklmnopqrstuvwxyz])|(?:name|net|n[acefgilopruz])|(?:org|om|me)|(?:pro|p[aefghklmnrstwy])|qa|r[eouw]|s[abcdeghijklmnortuvyz]|(?:tel|travel|t[cdfghjklmnoprtvwz])|u[agkmsyz]|v[aceginu]|w[fs]|y[etu]|z[amw]))|(?:(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[0-9])))(?:\:\d{1,5})?)(\/(?:(?:[äüöÜÄÖa-zA-Z0-9\;\/\?\:\@\&\=\#\~\-\.\+\!\*\'\(\)\,\_])|(?:\%[a-fA-F0-9]{2}))*)?(?:\b|$)/i
 
     // get nick name
@@ -73,7 +90,7 @@
     // message filter
     specialNicks.forEach(function(nickType,i) {
         var icon = document.createElement('i');
-        specialOptions[i] = GM_getValue("show" + specialClass[i].ucFirst(),true);
+        specialOptions[i] = getValue("show" + specialClass[i].ucFirst(),true);
         icon.classList.add("hand",i<2?"fa":"fas",nickType);
         icon.dataset.tgl = specialClass[i];
         icon.dataset.set = specialOptions[i];
@@ -81,13 +98,13 @@
         icon.addEventListener("click", function(){
             var msgs = chat.getElementsByClassName(this.dataset.tgl);
             if(this.dataset.set === "true") {
-                GM_setValue("show" + specialClass[i].ucFirst(),false);
+                setValue("show" + specialClass[i].ucFirst(),false);
                 this.dataset.set = false;
                 specialOptions[i] = false;
                 this.style.color = "#990000";
                 Array.prototype.forEach.call(msgs,function(msg) {msg.classList.add("hide")});
             } else {
-                GM_setValue("show" + specialClass[i].ucFirst(),true);
+                setValue("show" + specialClass[i].ucFirst(),true);
                 specialOptions[i] = true;
                 this.dataset.set = true;
                 this.style.color = "#009933";
@@ -103,17 +120,17 @@
     optionDiv.appendChild(document.createTextNode(" | "));
 
     // shorten links
-    var optionShortLink = GM_getValue("shortenLink",true);
+    var optionShortLink = getValue("shortenLink",true);
     var icon = document.createElement('i');
     icon.classList.add("hand","fas","fa-compress-alt");
     icon.addEventListener("click", function(){
         if(optionShortLink) {
-            GM_setValue("shortenLink",false);
+            setValue("shortenLink",false);
             optionShortLink = false;
             this.style.color = "#990000";
             icon.title = "Links in Nachrichten werden gekürzt";
         } else {
-            GM_setValue("shortenLink",true);
+            setValue("shortenLink",true);
             optionShortLink = true;
             this.style.color = "#009933";
             icon.title = "Links in Nachrichten werden vollständig angezeigt";
@@ -126,12 +143,12 @@
     optionDiv.appendChild(document.createTextNode(" | "));
 
     // personal search strings
-    var optionSearch = GM_getValue("searchString","").split(",");
+    var optionSearch = getValue("searchString","").split(",");
     icon = document.createElement('i');
     icon.classList.add("hand","fas","fa-search");
     icon.addEventListener("click", function(){
         var keywords = prompt("Hier kannst du - mit Komma getrennt - Wörter eingeben,\nwelche in Nachrichten gesucht und hervorgehoben werden.\nBeispiel: wert1,@youtubenick", optionSearch.join(","));
-        GM_setValue("searchString", keywords?keywords:"");
+        setValue("searchString", keywords?keywords:"");
         optionSearch = keywords.split(",");
     });
     icon.title = "Definiere eigene Schlüsselwörter";
