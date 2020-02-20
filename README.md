@@ -8,7 +8,7 @@ This script has the following features:
 * usernames with bad contrast are brightened up
 * shows unread messages in tab title if tab is unfocused
 * hide youtube/twitch/bot messages
-* save personal setting
+* save personal settings
 
 
 developed for _https://www.tampermonkey.net/_
