@@ -7,3 +7,4 @@ This script has the following features:
 * text urls are converted to clickable ones
 * usernames with bad contrast are brightened up
 * shows unread messages in tab title if tab is unfocused
+* hide youtube/twitch/bot messages
