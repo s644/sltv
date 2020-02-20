@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.81
+// @version      0.82
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -235,14 +235,14 @@
                             unreadPriority++;
                         }
 
-                        var text = node.data.replace("@" + user, '<span class="badge">' + user + '</span>');
+                        var text = node.data.replace(/</g,"&lt;").replace("@" + user, '<span class="badge">' + user + '</span>');
                         var urlMatch = text.match(urlRegex);
 
                         // make links clickable
                         if(urlMatch) {
                             // shorten if option set
                             if(optionShortLink) {
-                                text = text.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">$3</a>");
+                                text = text.replace.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">$3</a>");
                             } else {
                                 text = text.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">" + urlMatch[0] + "</a>");
                             }
