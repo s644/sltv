@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.67
+// @version      0.70
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -18,15 +18,89 @@
     var unreadPriority = 0;
     var origTitle = document.title;
 
+     // prototype upper first char
+    String.prototype.ucFirst = function() {
+        return this.charAt(0).toUpperCase() + this.slice(1);
+    }
 
-    var urlRegex = /(https?:\/\/)?(www\.)?[-a-zA-Z0-9@:%_\+~#=]{1,256}\.[-zA-Z()]{2,6}\b([äüößÄÜÖa-a-zA-Z0-9()@:%_\+.~#?&//=]*)/i
+    // prototype rgb to hex color
+    String.prototype.toHexColor = function() {
+        var color = this.parseRgb();
+        return color.r.toString(16) + color.g.toString(16) + color.b.toString(16);
+    }
+
+    // prototype hex to rgb color
+    String.prototype.toRgbColor = function() {
+        var color = this.match(/.*#?([0-9A-F]{2})([0-9A-F]{2})([0-9A-F]{2}).*/i);
+        this.r = parseInt(color[1], 16);
+        this.g = parseInt(color[2], 16);
+        this.b = parseInt(color[3], 16);
+        return this;
+    }
+
+    // prototype parse rgb values from css rgb string
+    String.prototype.parseRgb = function() {
+        var color = this.match(/.*rgb\(([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\).*/);
+        this.r = parseInt(color[1]);
+        this.g = parseInt(color[2]);
+        this.b = parseInt(color[3]);
+        return this;
+    }
+
+    var urlRegex = /((?:(http|https|Http|Https|rtsp|Rtsp):\/\/(?:(?:[a-zA-Z0-9\$\-\_\.\+\!\*\'\(\)\,\;\?\&\=]|(?:\%[a-fA-F0-9]{2})){1,64}(?:\:(?:[a-zA-Z0-9\$\-\_\.\+\!\*\'\(\)\,\;\?\&\=]|(?:\%[a-fA-F0-9]{2})){1,25})?\@)?)?((?:(?:[a-zA-Z0-9][a-zA-Z0-9\-]{0,64}\.)+(?:(?:aero|live|arpa|asia|a[cdefgilmnoqrstuwxz])|(?:biz|b[abdefghijmnorstvwyz])|(?:cat|com|coop|c[acdfghiklmnoruvxyz])|d[ejkmoz]|(?:edu|e[cegrstu])|f[ijkmor]|(?:gov|g[abdefghilmnpqrstuwy])|h[kmnrtu]|(?:info|int|i[delmnoqrst])|(?:jobs|j[emop])|k[eghimnrwyz]|l[abcikrstuvy]|(?:mil|mobi|museum|m[acdghklmnopqrstuvwxyz])|(?:name|net|n[acefgilopruz])|(?:org|om)|(?:pro|p[aefghklmnrstwy])|qa|r[eouw]|s[abcdeghijklmnortuvyz]|(?:tel|travel|t[cdfghjklmnoprtvwz])|u[agkmsyz]|v[aceginu]|w[fs]|y[etu]|z[amw]))|(?:(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[0-9])))(?:\:\d{1,5})?)(\/(?:(?:[äüöÜÄÖa-zA-Z0-9\;\/\?\:\@\&\=\#\~\-\.\+\!\*\'\(\)\,\_])|(?:\%[a-fA-F0-9]{2}))*)?(?:\b|$)/i
+
     // get nick name
     var user = document.getElementsByClassName("nicknamenangabe")[0].innerHTML;
-
     var chat = document.querySelector('div#chatinhalt');
+
+    // add our css styles to document
+    var style = document.createElement('style');
+    style.innerText = '.hand{cursor:pointer;}#optionList{padding: 0 10px;}#optionList>i{;margin:0 2px 0 2px;}.hide{display:none;}';
+    document.body.appendChild(style);
+
+    // option container
+    var specialNicks = ["fa-youtube","fa-twitch","fa-robot"];
+    var specialClass = ["ytMsg","twitMsg","botMsg"];
+    var specialNames = ["Youtube","Twitch","Bot"];
+    var specialOptions = [true,true,true];
+
+    var optionDiv = document.createElement('div');
+    optionDiv.id = "optionList";
+    optionDiv.innerText = "Optionen: "
+
+    specialNicks.forEach(function(nickType,i) {
+        var icon = document.createElement('i');
+        icon.classList.add("hand","fa",nickType);
+        icon.dataset.tgl = specialClass[i];
+        icon.dataset.set = true;
+        icon.id = "tgl" + specialClass[i].ucFirst();
+        icon.addEventListener("click", function(){
+            var msgs = chat.getElementsByClassName(this.dataset.tgl);
+            if(this.dataset.set === "true") {
+                this.dataset.set = false;
+                specialOptions[i] = false;
+                this.style.color = "#990000";
+                Array.prototype.forEach.call(msgs,function(msg) {msg.classList.add("hide")});
+            } else {
+                specialOptions[i] = true;
+                this.dataset.set = true;
+                this.style.color = "#009933";
+                Array.prototype.forEach.call(msgs,function(msg) {msg.classList.remove("hide")});
+            }
+            chat.scrollTop = chat.scrollHeight;
+        });
+        icon.title = "Sichtbarkeit von " + specialNames[i] + " Nachrichten umschalten";
+        icon.style.color = "#009933";
+        optionDiv.appendChild(icon);
+    });
+
+    optionDiv.style.marginTop = "-34px";
+    optionDiv.classList.add("panel","panel-default");
+    chat.parentNode.insertBefore(optionDiv,chat);
 
     // style fix
     chat.style.marginTop = "-15px";
+    chat.style.height = (parseInt(chat.style.height) - parseInt(optionDiv.offsetHeight) - 12).toString() + "px";
 
     //observer chatlist
     var observeChat = new MutationObserver(function(mutations) {
@@ -34,15 +108,36 @@
 
             // only process messages
             if(mutation.addedNodes.length >= 5 && mutation.removedNodes.length === 0) {
+                 // create our own message container
+                var msg = document.createElement('div');
 
                 // parse nick
                 var nickNode = mutation.addedNodes[2];
                 var nickColor = nickNode.style.color;
+                var specialNick = -1;
 
-                // add click event
-                nickNode.addEventListener("click", function(){addNickHandle(nickNode.innerText)}, false);
-                nickNode.style.cursor = "pointer";
-                nickNode.title = "@" + nickNode.innerText + " einfügen";
+                // detect youtube, twitch, bot
+                if(nickNode.getElementsByClassName("fa-youtube").length) {
+                    msg.classList.add("ytMsg");
+                    specialNick = 0;
+                } else if(nickNode.getElementsByClassName("fa-twitch").length) {
+                    msg.classList.add("twitMsg");
+                    specialNick = 1;
+                } else if(nickNode.getElementsByClassName("fa-robot").length) {
+                    msg.classList.add("botMsg");
+                    specialNick = 2;
+                }
+
+                if(specialNick !== -1 && !specialOptions[specialNick]) {
+                    msg.classList.add("hide");
+                }
+
+                // add click event for real users
+                if(specialNick == -1) {
+                    nickNode.addEventListener("click", function(){addNickHandle(nickNode.innerText)}, false);
+                    nickNode.classList.add("hand");
+                    nickNode.title = "@" + nickNode.innerText + " einfügen";
+                }
 
                 // make nicknames slightly brighter if contrast is to low
                 var contrast = testContrast("rgb(10,10,10)",nickColor);
@@ -51,9 +146,6 @@
                 if( contrast < contrastThreshold) {
                     nickNode.style.color = pSBC((contrastThreshold - contrast)/100, nickColor);
                 }
-
-                // create our own message container
-                var msg = document.createElement('div');
 
                 mutation.addedNodes.forEach(function(node, i) {
 
@@ -84,9 +176,9 @@
 
                         if(urlMatch) {
                             if(/https?/.test(urlMatch[0])) {
-                                text = text.replace(urlRegex,"<a href=\""+urlMatch[0]+"\" target=\"_blank\">"+urlMatch[0]+"</a>");
+                                text = text.replace(urlRegex,"<a href=\""+urlMatch[0]+"\" target=\"_blank\">$3</a>");
                             } else {
-                                text = text.replace(urlRegex,"<a href=\"http://"+urlMatch[0]+"\" target=\"_blank\">"+urlMatch[0]+"</a>");
+                                text = text.replace(urlRegex,"<a href=\"http://"+urlMatch[0]+"\" target=\"_blank\">$3</a>");
                             }
                         }
 
@@ -107,7 +199,7 @@
                     chat.removeChild(chat.firstChild);
                 }
 
-                if(document.visibilityState == "hidden") {
+                if(document.visibilityState == "hidden" && (specialNick == -1 || specialOptions[specialNick])) {
                     unread++;
                     document.title = "(" + unread.toString() + (unreadPriority > 0 ? ("|*" + unreadPriority.toString()):"") + ") - " + origTitle;
                 } else {
@@ -154,30 +246,6 @@
         var val2 = (c2.r*299 + c2.g*587 + c2.b*14) / 1000;
 
         return Math.abs(parseFloat(val1 - val2));
-    }
-
-    // prototype rgb to hex color
-    String.prototype.toHexColor = function() {
-        var color = this.parseRgb();
-        return color.r.toString(16) + color.g.toString(16) + color.b.toString(16);
-    }
-
-    // prototype hex to rgb color
-    String.prototype.toRgbColor = function() {
-        var color = this.match(/.*#?([0-9A-F]{2})([0-9A-F]{2})([0-9A-F]{2}).*/i);
-        this.r = parseInt(color[1], 16);
-        this.g = parseInt(color[2], 16);
-        this.b = parseInt(color[3], 16);
-        return this;
-    }
-
-    // prototype parse rgb values from css rgb string
-    String.prototype.parseRgb = function() {
-        var color = this.match(/.*rgb\(([0-9]{1,3})\s*,\s*([0-9]{1,3})\s*,\s*([0-9]{1,3})\).*/);
-        this.r = parseInt(color[1]);
-        this.g = parseInt(color[2]);
-        this.b = parseInt(color[3]);
-        return this;
     }
 
     // brighten up colors https://stackoverflow.com/a/13542669
