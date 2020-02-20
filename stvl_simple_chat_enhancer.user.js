@@ -242,7 +242,7 @@
                         if(urlMatch) {
                             // shorten if option set
                             if(optionShortLink) {
-                                text = text.replace.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">$3</a>");
+                                text = text.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">$3</a>");
                             } else {
                                 text = text.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">" + urlMatch[0] + "</a>");
                             }
