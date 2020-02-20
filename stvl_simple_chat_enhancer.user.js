@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.70
+// @version      0.72
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -9,6 +9,8 @@
 // @updateURL    https://github.com/s644/sltv/raw/master/stvl_simple_chat_enhancer.user.js
 // @supportURL   https://github.com/s644/sltv/issues
 // @grant        GM_log
+// @grant        GM_setValue
+// @grant        GM_getValue
 // ==/UserScript==
 
 (function() {
@@ -47,7 +49,7 @@
         return this;
     }
 
-    var urlRegex = /((?:(http|https|Http|Https|rtsp|Rtsp):\/\/(?:(?:[a-zA-Z0-9\$\-\_\.\+\!\*\'\(\)\,\;\?\&\=]|(?:\%[a-fA-F0-9]{2})){1,64}(?:\:(?:[a-zA-Z0-9\$\-\_\.\+\!\*\'\(\)\,\;\?\&\=]|(?:\%[a-fA-F0-9]{2})){1,25})?\@)?)?((?:(?:[a-zA-Z0-9][a-zA-Z0-9\-]{0,64}\.)+(?:(?:aero|live|arpa|asia|a[cdefgilmnoqrstuwxz])|(?:biz|b[abdefghijmnorstvwyz])|(?:cat|com|coop|c[acdfghiklmnoruvxyz])|d[ejkmoz]|(?:edu|e[cegrstu])|f[ijkmor]|(?:gov|g[abdefghilmnpqrstuwy])|h[kmnrtu]|(?:info|int|i[delmnoqrst])|(?:jobs|j[emop])|k[eghimnrwyz]|l[abcikrstuvy]|(?:mil|mobi|museum|m[acdghklmnopqrstuvwxyz])|(?:name|net|n[acefgilopruz])|(?:org|om)|(?:pro|p[aefghklmnrstwy])|qa|r[eouw]|s[abcdeghijklmnortuvyz]|(?:tel|travel|t[cdfghjklmnoprtvwz])|u[agkmsyz]|v[aceginu]|w[fs]|y[etu]|z[amw]))|(?:(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[0-9])))(?:\:\d{1,5})?)(\/(?:(?:[äüöÜÄÖa-zA-Z0-9\;\/\?\:\@\&\=\#\~\-\.\+\!\*\'\(\)\,\_])|(?:\%[a-fA-F0-9]{2}))*)?(?:\b|$)/i
+    var urlRegex = /((?:(http|https|Http|Https|rtsp|Rtsp):\/\/(?:(?:[a-zA-Z0-9\$\-\_\.\+\!\*\'\(\)\,\;\?\&\=]|(?:\%[a-fA-F0-9]{2})){1,64}(?:\:(?:[a-zA-Z0-9\$\-\_\.\+\!\*\'\(\)\,\;\?\&\=]|(?:\%[a-fA-F0-9]{2})){1,25})?\@)?)?((?:(?:[a-zA-Z0-9][a-zA-Z0-9\-]{0,64}\.)+(?:(?:aero|live|arpa|asia|a[cdefgilmnoqrstuwxz])|(?:biz|b[abdefghijmnorstvwyz])|(?:cat|com|coop|c[acdfghiklmnoruvxyz])|d[ejkmoz]|(?:edu|e[cegrstu])|f[ijkmor]|(?:gov|g[abdefghilmnpqrstuwy])|h[kmnrtu]|(?:info|int|i[delmnoqrst])|(?:jobs|j[emop])|k[eghimnrwyz]|l[abcikrstuvy]|(?:mil|mobi|museum|m[acdghklmnopqrstuvwxyz])|(?:name|net|n[acefgilopruz])|(?:org|om|me)|(?:pro|p[aefghklmnrstwy])|qa|r[eouw]|s[abcdeghijklmnortuvyz]|(?:tel|travel|t[cdfghjklmnoprtvwz])|u[agkmsyz]|v[aceginu]|w[fs]|y[etu]|z[amw]))|(?:(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\.(?:25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[0-9])))(?:\:\d{1,5})?)(\/(?:(?:[äüöÜÄÖa-zA-Z0-9\;\/\?\:\@\&\=\#\~\-\.\+\!\*\'\(\)\,\_])|(?:\%[a-fA-F0-9]{2}))*)?(?:\b|$)/i
 
     // get nick name
     var user = document.getElementsByClassName("nicknamenangabe")[0].innerHTML;
@@ -62,26 +64,30 @@
     var specialNicks = ["fa-youtube","fa-twitch","fa-robot"];
     var specialClass = ["ytMsg","twitMsg","botMsg"];
     var specialNames = ["Youtube","Twitch","Bot"];
-    var specialOptions = [true,true,true];
+    var specialOptions = [];
 
     var optionDiv = document.createElement('div');
     optionDiv.id = "optionList";
     optionDiv.innerText = "Optionen: "
 
+    // message filter
     specialNicks.forEach(function(nickType,i) {
         var icon = document.createElement('i');
+        specialOptions[i] = GM_getValue("show" + specialClass[i].ucFirst(),true);
         icon.classList.add("hand","fa",nickType);
         icon.dataset.tgl = specialClass[i];
-        icon.dataset.set = true;
+        icon.dataset.set = specialOptions[i];
         icon.id = "tgl" + specialClass[i].ucFirst();
         icon.addEventListener("click", function(){
             var msgs = chat.getElementsByClassName(this.dataset.tgl);
             if(this.dataset.set === "true") {
+                GM_setValue("show" + specialClass[i].ucFirst(),false);
                 this.dataset.set = false;
                 specialOptions[i] = false;
                 this.style.color = "#990000";
                 Array.prototype.forEach.call(msgs,function(msg) {msg.classList.add("hide")});
             } else {
+                GM_setValue("show" + specialClass[i].ucFirst(),true);
                 specialOptions[i] = true;
                 this.dataset.set = true;
                 this.style.color = "#009933";
@@ -90,9 +96,32 @@
             chat.scrollTop = chat.scrollHeight;
         });
         icon.title = "Sichtbarkeit von " + specialNames[i] + " Nachrichten umschalten";
-        icon.style.color = "#009933";
+        icon.style.color = specialOptions[i]?"#009933":"#990000";
         optionDiv.appendChild(icon);
     });
+
+    optionDiv.appendChild(document.createTextNode(" | "));
+
+    // shorten links
+    var optionShortLink = GM_getValue("shortenLink",true);
+    var icon = document.createElement('i');
+    icon.classList.add("hand","fas","fa-compress-alt");
+    icon.addEventListener("click", function(){
+        if(optionShortLink) {
+            GM_setValue("shortenLink",false);
+            optionShortLink = false;
+            this.style.color = "#990000";
+            icon.title = "Links in Nachrichten werden gekürzt";
+        } else {
+            GM_setValue("shortenLink",true);
+            optionShortLink = true;
+            this.style.color = "#009933";
+            icon.title = "Links in Nachrichten werden vollständig angezeigt";
+        }
+    });
+    icon.title = "Links in Nachrichten werden " + (optionShortLink ? "gekürzt" : "vollständig angezeigt");
+    icon.style.color = optionShortLink?"#009933":"#990000";
+    optionDiv.appendChild(icon);
 
     optionDiv.style.marginTop = "-34px";
     optionDiv.classList.add("panel","panel-default");
@@ -128,6 +157,7 @@
                     specialNick = 2;
                 }
 
+                // hide filtered messages
                 if(specialNick !== -1 && !specialOptions[specialNick]) {
                     msg.classList.add("hide");
                 }
@@ -174,11 +204,13 @@
                         var text = node.data.replace("@" + user, '<span class="badge">' + user + '</span>');
                         var urlMatch = text.match(urlRegex);
 
+                        // make links clickable
                         if(urlMatch) {
-                            if(/https?/.test(urlMatch[0])) {
-                                text = text.replace(urlRegex,"<a href=\""+urlMatch[0]+"\" target=\"_blank\">$3</a>");
+                            // shorten if option set
+                            if(optionShortLink) {
+                                text = text.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">$3</a>");
                             } else {
-                                text = text.replace(urlRegex,"<a href=\"http://"+urlMatch[0]+"\" target=\"_blank\">$3</a>");
+                                text = text.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">" + urlMatch[0] + "</a>");
                             }
                         }
 
