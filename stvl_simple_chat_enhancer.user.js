@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.74
+// @version      0.80
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -123,6 +123,20 @@
     icon.style.color = optionShortLink?"#009933":"#990000";
     optionDiv.appendChild(icon);
 
+    optionDiv.appendChild(document.createTextNode(" | "));
+
+    // personal search strings
+    var optionSearch = GM_getValue("searchString","").split(",");
+    icon = document.createElement('i');
+    icon.classList.add("hand","fas","fa-search");
+    icon.addEventListener("click", function(){
+        var keywords = prompt("Hier kannst du - mit Komma getrennt - Wörter eingeben,\nwelche in Nachrichten gesucht und hervorgehoben werden.\nBeispiel: wert1,@youtubenick", optionSearch.join(","));
+        GM_setValue("searchString", keywords?keywords:"");
+        optionSearch = keywords.split(",");
+    });
+    icon.title = "Definiere eigene Schlüsselwörter";
+    optionDiv.appendChild(icon);
+
     optionDiv.style.marginTop = "-34px";
     optionDiv.classList.add("panel","panel-default");
     chat.parentNode.insertBefore(optionDiv,chat);
@@ -216,6 +230,14 @@
                                 text = text.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">" + urlMatch[0] + "</a>");
                             }
                         }
+
+                        // search for keywords
+                        optionSearch.forEach(function(key){
+                            if(~text.indexOf(key)) {
+                               unreadPriority++;
+                            }
+                            text = text.replace(key,'<span class="badge">' + key + '</span>');
+                        });
 
                         // highlight my user name
                         wrapNode.innerHTML = text;
