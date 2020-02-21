@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.83
+// @version      0.84
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -128,12 +128,12 @@
             setValue("shortenLink",false);
             optionShortLink = false;
             this.style.color = "#990000";
-            icon.title = "Links in Nachrichten werden gekürzt";
+            this.title = "Links in Nachrichten werden vollständig angezeigt";
         } else {
             setValue("shortenLink",true);
             optionShortLink = true;
             this.style.color = "#009933";
-            icon.title = "Links in Nachrichten werden vollständig angezeigt";
+            this.title = "Links in Nachrichten werden gekürzt";
         }
     });
     icon.title = "Links in Nachrichten werden " + (optionShortLink ? "gekürzt" : "vollständig angezeigt");
