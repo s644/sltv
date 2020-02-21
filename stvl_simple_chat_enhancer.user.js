@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.86
+// @version      0.87
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -260,8 +260,21 @@
     }
 
     // parse user nickname
-    function loadNick() {
-        setting.nick = d.getElementsByClassName("nicknamenangabe")[0].innerHTML;
+    function loadNick(tries) {
+        tries = tries | 0;
+        setting.nick = "";
+        var nickNodes = d.getElementsByClassName("nicknamenangabe");
+        for(var i = 0; i < nickNodes.length; i++) {
+            if(nickNodes[i].innerText.length > 0) {
+                setting.nick = nickNodes[i].innerText;
+                break;
+            }
+        }
+
+        // workaround for guest nicks cause they load after document ready
+        if(setting.nick.length === 0 && tries < 10) {
+            setTimeout(function(){loadNick(tries++)},1000);
+        }
     }
 
     // shorten some functions
