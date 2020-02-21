@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.88
+// @version      0.89
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -180,6 +180,8 @@
                                 text = text.replace(/@([^\s]+)/g,"<span class=\"badge badgeLight\">$1</span>");
                             }
 
+                            text = text.replace(/_([^_]+)_/g,"<i>$1</i>").replace(/\*([^\*]+)\*/g,"<strong>$1</strong>").replace(/~([^~]+)~/g,"<strike>$1</strike>");
+
                             var urlMatch = text.match(urlRegex);
 
                             // make links clickable
@@ -232,14 +234,14 @@
         });
     }
 
-    function initObserver() {
-    }
 
+    // placeholder
     function createToggleOptionIcon(classNames, title,callback) {
         var node = createOptionIcon(classNames,title,callback);
         return node;
     }
 
+    // create icon for option panel
     function createOptionIcon(classNames, title,callback) {
         var node = createElement("i");
         node.classList.add("hand",...classNames);
