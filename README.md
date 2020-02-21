@@ -8,6 +8,7 @@ This script has the following features:
 * your name becomes highlighted in chat messages
 * slightly highlight userhandles in outgoing messages
 * text urls can be converted to clickable ones
+* basic markup support
 * usernames with bad contrast are brightened up
 * shows unread messages in tab title if tab is unfocused
 * hide youtube/twitch/bot/guest messages
