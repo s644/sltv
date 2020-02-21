@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.87
+// @version      0.88
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -34,11 +34,11 @@
 
         // add our css styles to document
         var style = createElement('style');
-        style.innerText = '.hand{cursor:pointer;}#optionList{padding: 0 10px;}#optionList>i{;margin:0 2px 0 2px;}.hide{display:none;}';
+        style.innerText = '.hand{cursor:pointer;}#optionList{padding: 0 10px;}#optionList>i{;margin:0 2px 0 2px;}.hide{display:none;}span .badgeLight{font-weight:normal; background-color:#44444491;}';
         d.body.appendChild(style);
 
         // option container
-        var specialNicks = ["fa-youtube","fa-twitch","fa-robot","fa-pray"];
+        var specialNicks = ["fa,fa-youtube","fa,fa-twitch","fa,fa-robot","fas,fa-pray"];
         var specialClass = ["ytMsg","twitMsg","botMsg","guestMsg"];
         var specialNames = ["Youtube","Twitch","Bot","Gast"];
         var specialOptions = [];
@@ -48,30 +48,21 @@
 
         // message filter
         specialNicks.forEach(function(nickType,i) {
-            var icon = createToggleOptionIcon([i<2?"fa":"fas",nickType],"Sichtbarkeit von " + specialNames[i] + " Nachrichten umschalten");
+            var icon = createToggleOptionIcon(nickType.split(","),"Sichtbarkeit von " + specialNames[i] + " Nachrichten umschalten");
             specialOptions[i] = getValue("show" + specialClass[i].ucFirst(),true);
-            icon.classList.add("hand",i<2?"fa":"fas",nickType);
             icon.dataset.tgl = specialClass[i];
             icon.dataset.set = specialOptions[i];
             icon.id = "tgl" + specialClass[i].ucFirst();
             icon.addEventListener("click", function(){
                 var msgs = chat.getElementsByClassName(this.dataset.tgl);
-                if(this.dataset.set === "true") {
-                    setValue("show" + specialClass[i].ucFirst(),false);
-                    this.dataset.set = false;
-                    specialOptions[i] = false;
-                    this.style.color = "#990000";
-                    Array.prototype.forEach.call(msgs,function(msg) {msg.classList.add("hide")});
-                } else {
-                    setValue("show" + specialClass[i].ucFirst(),true);
-                    specialOptions[i] = true;
-                    this.dataset.set = true;
-                    this.style.color = "#009933";
-                    Array.prototype.forEach.call(msgs,function(msg) {msg.classList.remove("hide")});
-                }
+                var set = (this.dataset.set === "true");
+                this.style.color = set?"#990000":"#009933";
+                Array.prototype.forEach.call(msgs,function(msg) {msg.classList.toggle("hide")})
+                setValue("show" + specialClass[i].ucFirst(),!set);
+                this.dataset.set = !set;
+                specialOptions[i] = !set;
                 chat.scrollTop = chat.scrollHeight;
             });
-            icon.title = "Sichtbarkeit von " + specialNames[i] + " Nachrichten umschalten";
             icon.style.color = specialOptions[i]?"#009933":"#990000";
             optionDiv.appendChild(icon);
         });
@@ -80,22 +71,13 @@
 
         // shorten links
         var optionShortLink = getValue("shortenLink",true);
-        var icon = d.createElement('i');
-        icon.classList.add("hand","fas","fa-compress-alt");
+        var icon = createToggleOptionIcon(["fas","fa-compress-alt"],"Links in Nachrichten werden " + (optionShortLink ? "gekürzt" : "vollständig angezeigt"));
         icon.addEventListener("click", function(){
-            if(optionShortLink) {
-                setValue("shortenLink",false);
-                optionShortLink = false;
-                this.style.color = "#990000";
-                this.title = "Links in Nachrichten werden vollständig angezeigt";
-            } else {
-                setValue("shortenLink",true);
-                optionShortLink = true;
-                this.style.color = "#009933";
-                this.title = "Links in Nachrichten werden gekürzt";
-            }
+                setValue("shortenLink",!optionShortLink);
+                optionShortLink = !optionShortLink;
+                this.style.color = optionShortLink?"#009933":"#990000";
+                this.title = "Links in Nachrichten werden " + (optionShortLink ? "gekürzt" : "vollständig angezeigt");
         });
-        icon.title = "Links in Nachrichten werden " + (optionShortLink ? "gekürzt" : "vollständig angezeigt");
         icon.style.color = optionShortLink?"#009933":"#990000";
         optionDiv.appendChild(icon);
 
@@ -103,14 +85,12 @@
 
         // personal search strings
         var optionSearch = getValue("searchString","").split(",");
-        icon = createElement('i');
-        icon.classList.add("hand","fas","fa-search");
+        icon = createOptionIcon(["fas","fa-search"],"Definiere eigene Schlüsselwörter");
         icon.addEventListener("click", function(){
             var keywords = prompt("Hier kannst du - mit Komma getrennt - Wörter eingeben,\nwelche in Nachrichten gesucht und hervorgehoben werden.\nBeispiel: wert1,@youtubenick", optionSearch.join(","));
             setValue("searchString", keywords?keywords:"");
             optionSearch = keywords.split(",");
         });
-        icon.title = "Definiere eigene Schlüsselwörter";
         optionDiv.appendChild(icon);
 
         optionDiv.style.marginTop = "-15px";
@@ -195,6 +175,11 @@
                             }
 
                             var text = node.data.replace(/</g,"&lt;").replace("@" + setting.nick, '<span class="badge">' + setting.nick + '</span>');
+
+                            if(setting.nick == nickNode.innerText) {
+                                text = text.replace(/@([^\s]+)/g,"<span class=\"badge badgeLight\">$1</span>");
+                            }
+
                             var urlMatch = text.match(urlRegex);
 
                             // make links clickable
@@ -247,6 +232,9 @@
         });
     }
 
+    function initObserver() {
+    }
+
     function createToggleOptionIcon(classNames, title,callback) {
         var node = createOptionIcon(classNames,title,callback);
         return node;
@@ -257,6 +245,11 @@
         node.classList.add("hand",...classNames);
         node.title = title;
         return node;
+    }
+
+    // toggle visibility of special messages
+    function toggleMsg(messageType) {
+
     }
 
     // parse user nickname
