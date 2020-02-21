@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.84
+// @version      0.85
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -197,7 +197,7 @@
                 }
 
                 // add click event for real users
-                if(specialNick == -1) {
+                if(specialNick == -1 || specialNick == 3) {
                     nickNode.addEventListener("click", function(){addNickHandle(nickNode.innerText)}, false);
                     nickNode.classList.add("hand");
                     nickNode.title = "@" + nickNode.innerText + " einfügen";
