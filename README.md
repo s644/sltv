@@ -13,6 +13,8 @@ This script has the following features:
 * shows unread messages in tab title if tab is unfocused
 * hide youtube/twitch/bot/guest messages
 * define your own keywords to search for
+* play notification sound on new messages in unfocused window state (throttled)
+* play notification sound on mentions or keyword findings (throttled)
 * save personal settings
 
 
