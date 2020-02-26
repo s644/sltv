@@ -16,6 +16,7 @@ This script has the following features:
 * play notification sound on new messages in unfocused window state (throttled)
 * play notification sound on mentions or keyword findings (throttled)
 * save personal settings
+* add favicon to tab
 
 
 developed for _https://www.tampermonkey.net/_
