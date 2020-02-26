@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.92
+// @version      0.93
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -45,6 +45,13 @@
     function init() {
         // get nick name
         loadNick();
+
+        // add favicon
+        var link = createElement('link');
+        link.rel = "shortcut icon"
+        link.href = "https://skylinetv.live/wp-content/uploads/2019/07/favicon-32x32.png"
+        link.type= "image/x-icon"
+        d.head.appendChild(link);
 
         var chat = d.querySelector('div#chatinhalt');
 
