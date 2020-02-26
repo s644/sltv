@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.94
+// @version      0.95
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -153,50 +153,53 @@
             mutations.forEach(function(mutation) {
 
                 // only process messages
-                if(mutation.addedNodes.length >= 5 && mutation.removedNodes.length === 0) {
+                if(mutation.removedNodes.length === 0 && (mutation.addedNodes.length >= 5 || (mutation.addedNodes.length == 1 && mutation.addedNodes[0].classList.contains("premium_signup")))) {
                     let notificationDone = false;
 
                     // create our own message container
                     var msg = createElement('div');
 
-                    // parse nick
-                    var nickNode = mutation.addedNodes[2];
-                    var nickColor = nickNode.style.color;
-                    var specialNick = -1;
 
-                    // detect youtube, twitch, bot
-                    if(nickNode.getElementsByClassName("fa-youtube").length) {
-                        msg.classList.add("ytMsg");
-                        specialNick = 0;
-                    } else if(nickNode.getElementsByClassName("fa-twitch").length) {
-                        msg.classList.add("twitMsg");
-                        specialNick = 1;
-                    } else if(nickNode.getElementsByClassName("fa-robot").length) {
-                        msg.classList.add("botMsg");
-                        specialNick = 2;
-                    } else if(/^Gast\d{1,4}$/m.test(nickNode.innerText)) {
-                        msg.classList.add("guestMsg");
-                        specialNick = 3;
-                    }
+                    if(mutation.addedNodes.length >= 5) {
+                        // parse nick
+                        var nickNode = mutation.addedNodes[2];
+                        var nickColor = nickNode.style.color;
+                        var specialNick = -1;
 
-                    // hide filtered messages
-                    if(specialNick !== -1 && !specialOptions[specialNick]) {
-                        msg.classList.add("hide");
-                    }
+                        // detect youtube, twitch, bot
+                        if(nickNode.getElementsByClassName("fa-youtube").length) {
+                            msg.classList.add("ytMsg");
+                            specialNick = 0;
+                        } else if(nickNode.getElementsByClassName("fa-twitch").length) {
+                            msg.classList.add("twitMsg");
+                            specialNick = 1;
+                        } else if(nickNode.getElementsByClassName("fa-robot").length) {
+                            msg.classList.add("botMsg");
+                            specialNick = 2;
+                        } else if(/^Gast\d{1,4}$/m.test(nickNode.innerText)) {
+                            msg.classList.add("guestMsg");
+                            specialNick = 3;
+                        }
 
-                    // add click event for real users
-                    if(specialNick == -1 || specialNick == 3) {
-                        nickNode.addEventListener("click", function(){addNickHandle(nickNode.innerText)}, false);
-                        nickNode.classList.add("hand");
-                        nickNode.title = "@" + nickNode.innerText + " einfügen";
-                    }
+                        // hide filtered messages
+                        if(specialNick !== -1 && !specialOptions[specialNick]) {
+                            msg.classList.add("hide");
+                        }
 
-                    // make nicknames slightly brighter if contrast is to low
-                    var contrast = testContrast("rgb(10,10,10)",nickColor);
-                    var contrastThreshold = 80;
+                        // add click event for real users
+                        if(specialNick == -1 || specialNick == 3) {
+                            nickNode.addEventListener("click", function(){addNickHandle(nickNode.innerText)}, false);
+                            nickNode.classList.add("hand");
+                            nickNode.title = "@" + nickNode.innerText + " einfügen";
+                        }
 
-                    if( contrast < contrastThreshold) {
-                        nickNode.style.color = pSBC((contrastThreshold - contrast)/100, nickColor);
+                        // make nicknames slightly brighter if contrast is to low
+                        var contrast = testContrast("rgb(10,10,10)",nickColor);
+                        var contrastThreshold = 80;
+
+                        if( contrast < contrastThreshold) {
+                            nickNode.style.color = pSBC((contrastThreshold - contrast)/100, nickColor);
+                        }
                     }
 
                     mutation.addedNodes.forEach(function(node, i) {
