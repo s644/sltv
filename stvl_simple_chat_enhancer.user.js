@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.95
-// @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls
+// @version      0.96
+// @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
 // @license      https://creativecommons.org/licenses/by-nc-sa/4.0/
@@ -57,8 +57,21 @@
 
         // add our css styles to document
         var style = createElement('style');
-        style.innerText = '.hand{cursor:pointer;}#optionList{padding: 0 10px;}#optionList>i{;margin:0 2px 0 2px;}.hide{display:none;}span .badgeLight{font-weight:normal; background-color:#44444491;}';
+        style.innerText = '#pip{display:flex;width:100%;position:relative;} #pip > div {width:50%;flex:1;} #pip > iframe{width:100%;flex:1;} .hand{cursor:pointer;}#optionList{padding: 0 10px;}#optionList>i{;margin:0 2px 0 2px;}.hide{display:none;}span .badgeLight{font-weight:normal; background-color:#44444491;}';
         d.body.appendChild(style);
+
+        // create pip container
+        var pip = createElement('div');
+        var vidFrame = createElement('iframe');
+        vidFrame.frameborder = "0";
+        vidFrame.allow = "autoplay;";
+        vidFrame.style = "border:none;padding-bottom:12px;";
+        vidFrame.classList.add("hide");
+        pip.id = "pip";
+
+        d.getElementById("premiumbereich").insertBefore(pip, d.getElementById("premiumbereich").getElementsByTagName("section")[0]);
+        pip.appendChild(d.getElementById("videocontainer"));
+        pip.appendChild(vidFrame);
 
         // option container
         var specialNicks = ["fa,fa-youtube","fa,fa-twitch","fa,fa-robot","fas,fa-pray"];
@@ -137,6 +150,37 @@
             var keywords = prompt("Hier kannst du - mit Komma getrennt - Wörter eingeben,\nwelche in Nachrichten gesucht und hervorgehoben werden.\nBeispiel: wert1,@youtubenick", optionSearch.join(","));
             setValue("searchString", keywords?keywords:"");
             optionSearch = keywords.split(",");
+        });
+        optionDiv.appendChild(icon);
+
+        // pip function
+        var optionPip = getValue("pipId","");
+        icon = createOptionIcon(["fas","fa-video"],"Zweite Perspektive (Youtube) einbinden (PiP)");
+        icon.addEventListener("click", function(){
+            if(vidFrame.classList.contains("hide")) {
+               var vidStr = prompt("Bitte Youtube URL/Video ID angeben\n\nBETA: Positionierung des Videos ist nur mit zweiter Perspektive optimal ;)", optionPip);
+                if(vidStr) {
+                    var match = vidStr.match(/((?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})|^([^"&?\/\s]{11})$)/i);
+                    if(match !== null) {
+                        setValue("pipId", match[1]);
+                        vidFrame.src = "https://www.youtube.com/embed/" + match[1];
+                        vidFrame.classList.remove("hide");
+                        this.classList.add("fa-video-slash");
+                        this.classList.remove("fa-video");
+                    } else {
+                        vidFrame.src = "";
+                        vidFrame.classList.add("hide");
+                    }
+                } else {
+                    vidFrame.src = "";
+                    vidFrame.classList.add("hide");
+                }
+            } else {
+                vidFrame.src = "";
+                vidFrame.classList.add("hide","fa-video");
+                this.classList.add("fa-video");
+                this.classList.remove("fa-video-slash");
+            }
         });
         optionDiv.appendChild(icon);
 
