@@ -256,7 +256,6 @@
                             // under 80 messages
                             mutation.target.removeChild(node);
                         } else {
-                            GM_log(node);
                             // over 80 message
                             while (chat.lastChild && chat.lastChild.nodeName !== "DIV") {
                                 chat.removeChild(chat.lastChild);
