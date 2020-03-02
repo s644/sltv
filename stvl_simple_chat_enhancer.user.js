@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Simple chat enhancer
 // @namespace    https://github.com/s644/sltv
-// @version      0.96
+// @version      0.97
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -11,6 +11,7 @@
 // @grant        GM_log
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @run-at       document-end
 // ==/UserScript==
 
 (function() {
@@ -43,6 +44,8 @@
 
     // initial setup
     function init() {
+        GM_log("loading stvl script v" + GM_info.script.version);
+
         // get nick name
         loadNick();
 
@@ -253,6 +256,7 @@
                             // under 80 messages
                             mutation.target.removeChild(node);
                         } else {
+                            GM_log(node);
                             // over 80 message
                             while (chat.lastChild && chat.lastChild.nodeName !== "DIV") {
                                 chat.removeChild(chat.lastChild);
@@ -297,20 +301,22 @@
                             }
 
                             // search for keywords
-                            optionSearch.forEach(function(key){
-                                if(~text.indexOf(key)) {
-                                    unreadPriority++;
+                            if(optionSearch[0] !== "") {
+                                optionSearch.forEach(function(key){
+                                    if(~text.indexOf(key)) {
+                                        unreadPriority++;
 
-                                    // play notification sound but only every 10th time in unfocused window
-                                    if(optionHandleNotify && unreadPriority % 10 === 1 && !notificationDone && initDone) {
-                                        notify(notifyPriority);
-                                        // only notify once, if priority and normal notification is activated
-                                        notificationDone = true;
+                                        // play notification sound but only every 10th time in unfocused window
+                                        if(optionHandleNotify && unreadPriority % 10 === 1 && !notificationDone && initDone) {
+                                            notify(notifyPriority);
+                                            // only notify once, if priority and normal notification is activated
+                                            notificationDone = true;
+                                        }
                                     }
-                                }
-                                var keyReg = new RegExp('\\b' + key + '\\b','g');
-                                text = text.replace(keyReg,'<span class="badge">' + key + '</span>');
-                            });
+                                    var keyReg = new RegExp('\\b' + key + '\\b','g');
+                                    text = text.replace(keyReg,'<span class="badge">' + key + '</span>');
+                                });
+                            }
 
                             // highlight my user name
                             wrapNode.innerHTML = text;
@@ -318,7 +324,6 @@
                         } else if(node.nodeName !== "BR") {
                             msg.appendChild(node);
                         }
-
                     });
 
                     // append our message container
@@ -353,7 +358,6 @@
         // dirty workaround for first init
         setTimeout(function(){initDone = true;}, 500);
     }
-
 
     // play notification sound
     function notify(file) {
@@ -518,5 +522,5 @@
     }
 
     d.addEventListener('visibilitychange', focusChanged, false);
-    d.addEventListener('DOMContentLoaded', init, false);
+    init();
 })();
