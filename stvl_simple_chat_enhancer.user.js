@@ -302,8 +302,10 @@
                             // search for keywords
                             if(optionSearch[0] !== "") {
                                 optionSearch.forEach(function(key){
-                                    if(~text.indexOf(key)) {
+                                    var keyReg = new RegExp('\\b' + key + '\\b','g');
+                                    if(keyReg.test(text)) {
                                         unreadPriority++;
+                                        text = text.replace(keyReg,'<span class="badge">' + key + '</span>');
 
                                         // play notification sound but only every 10th time in unfocused window
                                         if(optionHandleNotify && unreadPriority % 10 === 1 && !notificationDone && initDone) {
@@ -312,8 +314,6 @@
                                             notificationDone = true;
                                         }
                                     }
-                                    var keyReg = new RegExp('\\b' + key + '\\b','g');
-                                    text = text.replace(keyReg,'<span class="badge">' + key + '</span>');
                                 });
                             }
 
