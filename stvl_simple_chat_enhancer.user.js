@@ -623,7 +623,7 @@
         if(vidFrame.classList.contains("hide")) {
             var vidStr = prompt("Bitte Youtube URL/Video ID angeben\n\nBETA: Positionierung des Videos ist nur mit zweiter Perspektive optimal ;)", getValue("pipId"));
             if(vidStr) {
-                var match = vidStr.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/|)([^"&?\/\s]{11})/i);
+                var match = vidStr.match(/(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/|)([^\."&?\/\s]{11})/i);
                 if(match !== null) {
                     setValue("pipId", match[1]);
                     vidFrame.src = "https://www.youtube.com/embed/" + match[1];
