@@ -1,7 +1,7 @@
 // ==UserScript==
-// @name         [Skylinetv.live] Simple chat enhancer
+// @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      0.97
+// @version      1.00
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -11,20 +11,39 @@
 // @grant        GM_log
 // @grant        GM_setValue
 // @grant        GM_getValue
+// @grant        GM_addStyle
 // @run-at       document-end
 // ==/UserScript==
 
 (function() {
     //'use strict';
 
-    // some global vars...
     var d = document;
-    var origTitle = d.title;
-    var unread = 0;
-    var unreadPriority = 0;
-    var setting = {};
-    var notificationThrottle = false;
-    var initDone = false;
+
+    // default saving values
+    var defaultVal = {
+        searchString: "",
+        showGuestMsg: true,
+        showBotMsg: true,
+        showTwitMsg: true,
+        shortenLink: true,
+        notifySound: false,
+        notifyHandleSound: false,
+        showYtMsg: false,
+        displayButtonbar: true,
+        pipId: ""
+    };
+
+    // temp values
+    var setting = {
+        initDone: false,
+        origTitle: d.title,
+        unread: 0,
+        unreadPriority: 0,
+        notificationThrottle: false,
+        keywords:[],
+        lastContainer: "",
+    };
 
     /*
      *  https://notificationsounds.com/notification-sounds/when-604
@@ -44,156 +63,106 @@
 
     // initial setup
     function init() {
-        GM_log("loading stvl script v" + GM_info.script.version);
+        // output to console
+        GM_log("Initialize Boost v" + GM_info.script.version);
+
+        // create dropdown menu
+        var menu = new Menu("boostMenu");
+        d.querySelector('.navbar-right').prepend(menu.render());
 
         // get nick name
         loadNick();
 
         // add favicon
-        var link = createElement('link');
-        link.rel = "shortcut icon"
-        link.href = "https://skylinetv.live/wp-content/uploads/2019/07/favicon-32x32.png"
-        link.type= "image/x-icon"
-        d.head.appendChild(link);
-
-        var chat = d.querySelector('div#chatinhalt');
+        addFav();
 
         // add our css styles to document
-        var style = createElement('style');
-        style.innerText = '#pip{display:flex;width:100%;position:relative;} #pip > div {width:50%;flex:1;} #pip > iframe{width:100%;flex:1;} .hand{cursor:pointer;}#optionList{padding: 0 10px;}#optionList>i{;margin:0 2px 0 2px;}.hide{display:none;}span .badgeLight{font-weight:normal; background-color:#44444491;}';
-        d.body.appendChild(style);
+        addStyles();
 
-        // create pip container
-        var pip = createElement('div');
-        var vidFrame = createElement('iframe');
-        vidFrame.frameborder = "0";
-        vidFrame.allow = "autoplay;";
-        vidFrame.style = "border:none;padding-bottom:12px;";
-        vidFrame.classList.add("hide");
-        pip.id = "pip";
+        // add pip container
+        addPipContainer();
 
-        d.getElementById("premiumbereich").insertBefore(pip, d.getElementById("premiumbereich").getElementsByTagName("section")[0]);
-        pip.appendChild(d.getElementById("videocontainer"));
-        pip.appendChild(vidFrame);
+        var chat = d.querySelector('div#chatinhalt');
 
         // option container
         var specialNicks = ["fa,fa-youtube","fa,fa-twitch","fa,fa-robot","fas,fa-pray"];
         var specialClass = ["ytMsg","twitMsg","botMsg","guestMsg"];
         var specialNames = ["Youtube","Twitch","Bot","Gast"];
-        var specialOptions = [];
 
         var optionDiv = createElement('div');
         optionDiv.id = "optionList";
-
-        // message filter
-        specialNicks.forEach(function(nickType,i) {
-            var icon = createToggleOptionIcon(nickType.split(","),"Sichtbarkeit von " + specialNames[i] + " Nachrichten umschalten");
-            specialOptions[i] = getValue("show" + specialClass[i].ucFirst(),true);
-            icon.dataset.tgl = specialClass[i];
-            icon.dataset.set = specialOptions[i];
-            icon.id = "tgl" + specialClass[i].ucFirst();
-            icon.addEventListener("click", function(){
-                var msgs = chat.getElementsByClassName(this.dataset.tgl);
-                var set = (this.dataset.set === "true");
-                this.style.color = set?"#990000":"#009933";
-                Array.prototype.forEach.call(msgs,function(msg) {msg.classList.toggle("hide")})
-                setValue("show" + specialClass[i].ucFirst(),!set);
-                this.dataset.set = !set;
-                specialOptions[i] = !set;
-                chat.scrollTop = chat.scrollHeight;
-            });
-            icon.style.color = specialOptions[i]?"#009933":"#990000";
-            optionDiv.appendChild(icon);
-        });
-
-        optionDiv.appendChild(document.createTextNode(" | "));
-
-        // shorten links
-        var optionShortLink = getValue("shortenLink",true);
-        var icon = createToggleOptionIcon(["fas","fa-compress-alt"],"Links in Nachrichten werden " + (optionShortLink ? "gekürzt" : "vollständig angezeigt"));
-        icon.addEventListener("click", function(){
-                setValue("shortenLink",!optionShortLink);
-                optionShortLink = !optionShortLink;
-                this.style.color = optionShortLink?"#009933":"#990000";
-                this.title = "Links in Nachrichten werden " + (optionShortLink ? "gekürzt" : "vollständig angezeigt");
-        });
-        icon.style.color = optionShortLink?"#009933":"#990000";
-        optionDiv.appendChild(icon);
-
-        optionDiv.appendChild(document.createTextNode(" | "));
-
-        // notification sound
-        var optionNotify = getValue("notifySound",false);
-        icon = createToggleOptionIcon(["fas","fa-comment-medical"],"Benachrichtigungston für normale Nachrichten\nim unfokussierten Fenster");
-        icon.style.color = optionNotify?"#009933":"#990000";
-        icon.addEventListener("click", function(){
-            optionNotify = !optionNotify;
-            setValue("notifySound", optionNotify);
-            this.style.color = optionNotify?"#009933":"#990000";
-        });
-        optionDiv.appendChild(icon);
-
-        // priority notification sound
-        var optionHandleNotify = getValue("notifyHandleSound",false);
-        icon = createToggleOptionIcon(["fas","fa-at"],"Benachrichtigungston für Erwähnungen in Nachrichten");
-        icon.style.color = optionHandleNotify?"#009933":"#990000";
-        icon.addEventListener("click", function(){
-            optionHandleNotify = !optionHandleNotify;
-            setValue("notifyHandleSound", optionHandleNotify);
-            this.style.color = optionHandleNotify?"#009933":"#990000";
-        });
-        optionDiv.appendChild(icon);
-
-        optionDiv.appendChild(document.createTextNode(" | "));
-
-        // personal search strings
-        var optionSearch = getValue("searchString","").split(",");
-        icon = createOptionIcon(["fas","fa-search"],"Definiere eigene Schlüsselwörter");
-        icon.addEventListener("click", function(){
-            var keywords = prompt("Hier kannst du - mit Komma getrennt - Wörter eingeben,\nwelche in Nachrichten gesucht und hervorgehoben werden.\nBeispiel: wert1,@youtubenick", optionSearch.join(","));
-            setValue("searchString", keywords?keywords:"");
-            optionSearch = keywords.split(",");
-        });
-        optionDiv.appendChild(icon);
-
-        // pip function
-        var optionPip = getValue("pipId","");
-        icon = createOptionIcon(["fas","fa-video"],"Zweite Perspektive (Youtube) einbinden (PiP)");
-        icon.addEventListener("click", function(){
-            if(vidFrame.classList.contains("hide")) {
-               var vidStr = prompt("Bitte Youtube URL/Video ID angeben\n\nBETA: Positionierung des Videos ist nur mit zweiter Perspektive optimal ;)", optionPip);
-                if(vidStr) {
-                    var match = vidStr.match(/((?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})|^([^"&?\/\s]{11})$)/i);
-                    if(match !== null) {
-                        setValue("pipId", match[1]);
-                        vidFrame.src = "https://www.youtube.com/embed/" + match[1];
-                        vidFrame.classList.remove("hide");
-                        this.classList.add("fa-video-slash");
-                        this.classList.remove("fa-video");
-                    } else {
-                        vidFrame.src = "";
-                        vidFrame.classList.add("hide");
-                    }
-                } else {
-                    vidFrame.src = "";
-                    vidFrame.classList.add("hide");
-                }
-            } else {
-                vidFrame.src = "";
-                vidFrame.classList.add("hide","fa-video");
-                this.classList.add("fa-video");
-                this.classList.remove("fa-video-slash");
-            }
-        });
-        optionDiv.appendChild(icon);
-
+        if (!getValue("displayButtonbar")) {
+            optionDiv.classList.add("hide");
+        }
         optionDiv.style.marginTop = "-15px";
         optionDiv.classList.add("panel","panel-default");
         chat.parentNode.insertBefore(optionDiv,chat);
 
+        menu.addItem("Nachrichtenfilter",false);
+
+        // message filter
+        specialNicks.forEach(function(nickType,i) {
+            menu.addOptionItem(specialNames[i], "show" + specialClass[i].ucFirst());
+            var icon = createToggleOptionIcon(nickType.split(","),"Sichtbarkeit von " + specialNames[i] + " Nachrichten umschalten","show" + specialClass[i].ucFirst());
+            icon.dataset.name = "show" + specialClass[i].ucFirst();
+            optionDiv.appendChild(icon);
+            updateOptionUi("show" + specialClass[i].ucFirst(), getValue("show" + specialClass[i].ucFirst()));
+        });
+
+        menu.addDivider();
+        optionDiv.appendChild(d.createTextNode(" | "));
+
+        // shorten links
+        menu.addOptionItem("kurze Links","shortenLink");
+        var icon = createToggleOptionIcon(["fas","fa-compress-alt"],"Links in Nachrichten werden " + (getValue("shortenLink") ? "gekürzt" : "vollständig angezeigt"));
+        icon.dataset.name = "shortenLink";
+        icon.addEventListener("click", function(){this.title = "Links in Nachrichten werden " + (getValue("shortenLink") ? "gekürzt" : "vollständig angezeigt");});
+        optionDiv.appendChild(icon);
+        updateOptionUi("shortenLink", getValue("shortenLink"));
+
+        // button bar
+        menu.addOptionItem("Schnellzugriff","displayButtonbar");
+        updateOptionUi("displayButtonbar", getValue("displayButtonbar"));
+
+        menu.addDivider();
+        menu.addItem("Benachrichtigungen", false);
+        optionDiv.appendChild(d.createTextNode(" | "));
+
+        // notification sound
+        menu.addOptionItem("Nachrichten", "notifySound");
+        icon = createToggleOptionIcon(["fas","fa-comment-medical"],"Benachrichtigungston für normale Nachrichten\nim unfokussierten Fenster","notifySound");
+        optionDiv.appendChild(icon);
+        updateOptionUi("notifySound", getValue("notifySound"));
+
+        // priority notification sound
+        menu.addOptionItem("Erwähnungen", "notifyHandleSound");
+        icon = createToggleOptionIcon(["fas","fa-at"],"Benachrichtigungston für Erwähnungen in Nachrichten", "notifyHandleSound");
+        optionDiv.appendChild(icon);
+        updateOptionUi("notifyHandleSound", getValue("notifyHandleSound"));
+
+        menu.addDivider();
+        optionDiv.appendChild(d.createTextNode(" | "));
+
+        // personal search strings
+        setting.keywords = getValue("searchString").split(",");
+        menu.addItem("Schlüsselwörter","searchString");
+        icon = createOptionIcon(["fas","fa-search","hide"],"Definiere eigene Schlüsselwörter");
+        icon.dataset.name = "searchString";
+        optionDiv.appendChild(icon);
+
+        // pip function
+        menu.addItem("Bild in Bild","pipId");
+        icon = createOptionIcon(["fas","fa-video"],"Zweite Perspektive (Youtube) einbinden (PiP)");
+        icon.dataset.name = "pipId";
+        optionDiv.appendChild(icon);
+
+        menu.addDivider();
+        var settingLink = menu.addItem("Über Boost v" + GM_info.script.version, "showSettings",).getElementsByTagName("a")[0];
+        settingLink.href = "#";
+
         // style fix
         chat.style.marginTop = "-15px";
-        chat.style.height = (parseInt(chat.style.height) - parseInt(optionDiv.offsetHeight) - 12).toString() + "px";
+        chat.style.height = (parseInt(chat.style.height) - parseInt(getValue("displayButtonbar")?parseInt(optionDiv.offsetHeight)+5:-22)).toString() + "px";
 
         //observer chatlist
         var observeChat = new MutationObserver(function(mutations) {
@@ -206,35 +175,41 @@
                     // create our own message container
                     var msg = createElement('div');
 
-
                     if(mutation.addedNodes.length >= 5) {
                         // parse nick
                         var nickNode = mutation.addedNodes[2];
                         var nickColor = nickNode.style.color;
-                        var specialNick = -1;
+                        var specialNick = "";
 
                         // detect youtube, twitch, bot
                         if(nickNode.getElementsByClassName("fa-youtube").length) {
                             msg.classList.add("ytMsg");
-                            specialNick = 0;
+                            specialNick = "ytMsg";
                         } else if(nickNode.getElementsByClassName("fa-twitch").length) {
                             msg.classList.add("twitMsg");
-                            specialNick = 1;
+                            specialNick = "twitMsg";
                         } else if(nickNode.getElementsByClassName("fa-robot").length) {
+                            switch(nickNode.innerText.match(/([^\s]*)\-Bot\s/)[1]) {
+                                case "Finanz": msg.classList.add("financeBot"); break;
+                                case "Aktions": msg.classList.add("actionBot"); break;
+                                case "Veröffentlichungs": msg.classList.add("releaseBot"); break;
+                                case "Musik": msg.classList.add("musicBot"); break;
+                                default:break;
+                            }
                             msg.classList.add("botMsg");
-                            specialNick = 2;
+                            specialNick = "botMsg";
                         } else if(/^Gast\d{1,4}$/m.test(nickNode.innerText)) {
                             msg.classList.add("guestMsg");
-                            specialNick = 3;
+                            specialNick = "guestMsg";
                         }
 
                         // hide filtered messages
-                        if(specialNick !== -1 && !specialOptions[specialNick]) {
+                        if(specialNick !== "" && !getValue("show" + specialNick.ucFirst())) {
                             msg.classList.add("hide");
                         }
 
                         // add click event for real users
-                        if(specialNick == -1 || specialNick == 3) {
+                        if(specialNick === "" || specialNick === "guestMsg") {
                             nickNode.addEventListener("click", function(){addNickHandle(nickNode.innerText)}, false);
                             nickNode.classList.add("hand");
                             nickNode.title = "@" + nickNode.innerText + " einfügen";
@@ -264,15 +239,14 @@
 
                         // ..and create a new one
                         if(node.nodeName === "#text") {
-
                             // wrap text nodes in span container
                             var wrapNode = createElement('span');
 
                             // check for priority messages
                             if(~node.data.indexOf("@" + setting.nick)) {
-                                unreadPriority++;
+                                setting.unreadPriority++;
                                 // play notification sound but only every 10th time in unfocused window
-                                if(optionHandleNotify && unreadPriority % 10 === 1 && initDone) {
+                                if(getValue("notifyHandleSound") && setting.unreadPriority % 10 === 1 && setting.initDone) {
                                     notify(notifyPriority);
                                     // only notify once, if priority and normal notification is activated
                                     notificationDone = true;
@@ -292,7 +266,7 @@
                             // make links clickable
                             if(urlMatch) {
                                 // shorten if option set
-                                if(optionShortLink) {
+                                if(getValue("shortenLink")) {
                                     text = text.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">$3</a>");
                                 } else {
                                     text = text.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">" + urlMatch[0] + "</a>");
@@ -300,15 +274,15 @@
                             }
 
                             // search for keywords
-                            if(optionSearch[0] !== "") {
-                                optionSearch.forEach(function(key){
+                            if(setting.keywords[0] !== "") {
+                                setting.keywords.forEach(function(key){
                                     var keyReg = new RegExp('\\b' + key + '\\b','g');
                                     if(keyReg.test(text)) {
-                                        unreadPriority++;
+                                        setting.unreadPriority++;
                                         text = text.replace(keyReg,'<span class="badge">' + key + '</span>');
 
                                         // play notification sound but only every 10th time in unfocused window
-                                        if(optionHandleNotify && unreadPriority % 10 === 1 && !notificationDone && initDone) {
+                                        if(getValue("notifyHandleSound") && setting.unreadPriority % 10 === 1 && !notificationDone && setting.initDone) {
                                             notify(notifyPriority);
                                             // only notify once, if priority and normal notification is activated
                                             notificationDone = true;
@@ -333,18 +307,18 @@
                         chat.removeChild(chat.firstChild);
                     }
 
-                    if(document.visibilityState == "hidden" && initDone && (specialNick == -1 || specialOptions[specialNick])) {
-                        unread++;
+                    if(d.visibilityState == "hidden" && setting.initDone && (specialNick === "" || getValue("show" + specialNick.ucFirst()))) {
+                        setting.unread++;
 
                         // play notification sound but only every 20th time in unfocused window and if priority sound hasn't been played
-                        if(optionNotify && unread % 20 === 1 && !notificationDone && initDone) {
+                        if(getValue("notifySound") && setting.unread % 20 === 1 && !notificationDone && setting.initDone) {
                             notify(notifyNormal);
                         }
 
-                        document.title = "(" + unread.toString() + (unreadPriority > 0 ? ("|*" + unreadPriority.toString()):"") + ") - " + origTitle;
+                        d.title = "(" + setting.unread.toString() + (setting.unreadPriority > 0 ? ("|*" + setting.unreadPriority.toString()):"") + ") - " + setting.origTitle;
                     } else {
-                        unreadPriority = 0;
-                        unread = 0;
+                        setting.unreadPriority = 0;
+                        setting.unread = 0;
                     }
                 }
             });
@@ -354,31 +328,105 @@
             characterData: false, attributes: false, childList: true, subtree: false
         });
 
+        // create setting page
+        var settingContainer = createElement("div");
+        settingContainer.id = "boostSettingContainer";
+        settingContainer.innerHTML = '<h1>Boost Einstellungen</h1>\
+<ul class="nav nav-tabs">\
+  <li role="presentation" class="active"><a data-toggle="tab" href="#boostAbout">Über</a></li>\
+</ul>\
+<div class="tab-content">\
+<div id="boostAbout" class="tab-pane fade in active">\
+<dl class="dl-horizontal">\
+<dt>Entwickler</dt>\
+<dd>Das Script ist ein privates Opensource Projekt von <span class="badge badgeLight hand" id="authorHandle">@' + GM_info.script.author + '</span> und steht in keiner Verbindung zu skylinetv.</dd>\
+<dt>Datenschutz</dt>\
+<dd>Alle Daten werden lokal in deinem Browser gespeichert.</dd>\
+<dt>Version</dt>\
+<dd>' + GM_info.script.version + '</dd>\
+<dt>Homepage</dt>\
+<dd><a href="' + GM_info.script.namespace + '" target="_blank">Github</a></dd>\
+<dt>Lizenz</dt>\
+<dd><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank"><img alt="Creative Commons License" style="border-width:0" src="https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png" /></a></dd>\
+<dt>Changelog</dt>\
+<dd><a href="https://github.com/s644/sltv/commits/master" target="_blank">Commits</a></dd>\
+<dt>Fehler gefunden?</dt>\
+<dd><a href="' + GM_info.script.supportURL + '" target="_blank">Melden!</a></dd>\
+</dl>\
+</div>\
+</div>\
+<hr style="border-color:#404040;"><button type="button" class="btn btn-danger" id="closeSettings">Schließen</button>';
+        settingContainer.classList.add("col-md-9","hauptcontainer");
+        d.querySelector("div#auktionscontainer").parentNode.prepend(settingContainer);
+        d.querySelector("button#closeSettings").onclick = closeSettings;
+        d.querySelector("span#authorHandle").addEventListener("click", () => {addNickHandle(GM_info.script.author)});
+
         // dirty workaround for first init
-        setTimeout(function(){initDone = true;}, 500);
+        setTimeout(function(){setting.initDone = true;}, 500);
+    }
+
+    // add favicon
+    function addFav() {
+        // add favicon
+        var link = createElement('link');
+        link.rel = "shortcut icon"
+        link.href = "/wp-content/uploads/2019/07/favicon-32x32.png"
+        link.type= "image/x-icon"
+        d.head.appendChild(link);
+    }
+
+    // add boost styles
+    function addStyles() {
+        // global
+        GM_addStyle(".hand{cursor:pointer;} .hide{display:none;} span.badgeLight{font-weight:normal; background-color:#44444491;}a.disabled {color:gray;pointer-events: none;}");
+        // PiP
+        GM_addStyle("#pip{display:flex;width:100%;position:relative;} #pip > div {width:50%;flex:1;} #pip > iframe{width:100%;flex:1;}");
+        // option list
+        GM_addStyle("#optionList{padding:0 10px;} #optionList > i{;margin:0 2px 0 2px;}");
+    }
+
+    // add pip container
+    function addPipContainer() {
+        var pip = createElement('div');
+        var vidFrame = createElement('iframe');
+        vidFrame.id = "pipFrame";
+        vidFrame.frameborder = "0";
+        vidFrame.allow = "autoplay;";
+        vidFrame.style = "border:none;padding-bottom:12px;";
+        vidFrame.classList.add("hide");
+        pip.id = "pip";
+
+        d.getElementById("premiumbereich").insertBefore(pip, d.getElementById("premiumbereich").getElementsByTagName("section")[0]);
+        pip.appendChild(d.getElementById("videocontainer"));
+        pip.appendChild(vidFrame);
     }
 
     // play notification sound
     function notify(file) {
         // prevent troll actions
-        if(!notificationThrottle) {
-            notificationThrottle = true;
+        if(!setting.notificationThrottle) {
+            setting.notificationThrottle = true;
             let src = "data:audio/mp3;base64," + file;
             let audio = new Audio(src);
-            audio.onended = function(){notificationThrottle = false;};
+            audio.onended = function(){setting.notificationThrottle = false;};
             audio.play();
         }
     }
 
     // placeholder
-    function createToggleOptionIcon(classNames, title,callback) {
-        var node = createOptionIcon(classNames,title,callback);
+    function createToggleOptionIcon(classNames, title, name) {
+        var node = createOptionIcon(classNames,title, true);
+        node.addEventListener('click',optionToggled);
+        node.dataset.name = name;
         return node;
     }
 
     // create icon for option panel
-    function createOptionIcon(classNames, title,callback) {
+    function createOptionIcon(classNames, title, preventDefault) {
         var node = createElement("i");
+        if(preventDefault !== true) {
+            node.addEventListener('click',optionClicked);
+        }
         node.classList.add("hand",...classNames);
         node.title = title;
         return node;
@@ -386,7 +434,10 @@
 
     // toggle visibility of special messages
     function toggleMsg(messageType) {
-
+        var chat = d.getElementById("chatinhalt");
+        var msgs = chat.getElementsByClassName(messageType);
+        Array.prototype.forEach.call(msgs,function(msg) {msg.classList.toggle("hide")})
+        chat.scrollTop = chat.scrollHeight;
     }
 
     // parse user nickname
@@ -426,12 +477,13 @@
         selection.addRange(range);
     }
 
+    // reset unread values on window focus
     function focusChanged() {
         // handle focus changes
         if (d.visibilityState !== "hidden") {
-            unread = 0;
-            unreadPriority = 0;
-            d.title = origTitle;
+            setting.unread = 0;
+            setting.unreadPriority = 0;
+            d.title = setting.origTitle;
         }
     }
 
@@ -516,8 +568,242 @@
     }
 
     // pimp get setting function
-    function getValue(name, def) {
-      	return isTampermonkey ? GM_getValue(name, def):def;
+    function getValue(name) {
+        if(defaultVal.hasOwnProperty(name)) {
+            return isTampermonkey ? GM_getValue(name, defaultVal[name]):defaultVal[name];
+        } else {
+            return null;
+        }
+    }
+
+    // toggle youtube message visibility
+    window.showYtMsgCallback = function () {
+        toggleMsg("ytMsg");
+    }
+
+    // toggle twitter message visibility
+    window.showTwitMsgCallback = function () {
+        toggleMsg("twitMsg");
+    }
+
+    // toggle bot message visibility
+    window.showBotMsgCallback = function () {
+        toggleMsg("botMsg");
+    }
+
+    // toggle guest message visibility
+    window.showGuestMsgCallback = function () {
+        toggleMsg("guestMsg");
+    }
+
+    // define keywords
+    window.searchStringCallback = function () {
+        var keywords = prompt("Hier kannst du - mit Komma getrennt - Wörter eingeben,\nwelche in Nachrichten gesucht und hervorgehoben werden.\nBeispiel: wert1,@youtubenick", getValue("searchString"));
+        setValue("searchString", keywords?keywords:"");
+        setting.keywords = keywords.split(",");
+    }
+
+    // display button bar
+    window.displayButtonbarCallback = function () {
+        var chat = d.getElementById("chatinhalt");
+        var buttonBar = d.getElementById("optionList");
+        if (getValue("displayButtonbar")) {
+            buttonBar.classList.remove("hide");
+        } else {
+            buttonBar.classList.add("hide");
+        }
+        chat.style.height = (parseInt(chat.style.height) - parseInt(getValue("displayButtonbar")?parseInt(buttonBar.offsetHeight)+5:-27)).toString() + "px";
+        chat.scrollTop = chat.scrollHeight;
+    }
+
+    // manage pip
+    window.pipIdCallback = function () {
+        var vidFrame = d.querySelector("iframe#pipFrame");
+        var iconNodes = d.querySelectorAll('i[data-name="pipId"]');
+        if(vidFrame.classList.contains("hide")) {
+            var vidStr = prompt("Bitte Youtube URL/Video ID angeben\n\nBETA: Positionierung des Videos ist nur mit zweiter Perspektive optimal ;)", getValue("pipId"));
+            if(vidStr) {
+                var match = vidStr.match(/((?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})|^([^"&?\/\s]{11})$)/i);
+                if(match !== null) {
+                    setValue("pipId", match[1]);
+                    vidFrame.src = "https://www.youtube.com/embed/" + match[1];
+                    vidFrame.classList.remove("hide");
+                    for(let i = 0; i < iconNodes.length; i++) {
+                        iconNodes[i].classList.remove("fa-video");
+                        iconNodes[i].classList.add("fa-video-slash");
+                    }
+                } else {
+                    vidFrame.src = "";
+                    vidFrame.classList.add("hide");
+                }
+            } else {
+                vidFrame.src = "";
+                vidFrame.classList.add("hide");
+            }
+        } else {
+            vidFrame.src = "";
+            vidFrame.classList.add("hide");
+            for(let i = 0; i < iconNodes.length; i++) {
+                iconNodes[i].classList.remove("fa-video-slash");
+                iconNodes[i].classList.add("fa-video");
+            }
+        }
+    }
+
+    // show setting page
+    window.showSettingsCallback = function () {
+        var pageNodes = d.getElementsByClassName("hauptcontainer");
+        for(let i = 0; i < pageNodes.length; i++) {
+            if(pageNodes[i].style.display == "block") {
+                setting.lastContainer = pageNodes[i];
+                pageNodes[i].style.display = "none";
+            }
+        }
+        var activeNodes = d.querySelectorAll("#header ul.nav>li.active");
+        for(let i = 0; i < activeNodes.length; i++) {
+            activeNodes[i].classList.remove("active");
+        }
+
+        d.querySelector("li#boostMenu").classList.add("active");
+        d.querySelector("div#boostSettingContainer").style.display = "block";
+    }
+
+    // close setting container
+    function closeSettings() {
+      	d.querySelector("li#boostMenu").classList.remove("active");
+        d.querySelector("div#boostSettingContainer").style.display = "none";
+        setting.lastContainer.style.display = "block";
+        d.querySelectorAll("#header ul.nav>li>a." + setting.lastContainer.id.replace("container","link"))[0].parentElement.classList.add("active");
+    }
+
+    // option clicked callback
+    function optionClicked(e) {
+      	var name = e.target.dataset.name;
+        var cb = window[name + "Callback"];
+        if(typeof cb === "function") {
+            cb();
+        }
+    }
+
+    // option toggle callback
+    function optionToggled(e) {
+      	var name = e.target.dataset.name;
+        if(defaultVal.hasOwnProperty(name)) {
+            var val = !getValue(name);
+            setValue(name, val);
+            updateOptionUi(name, val);
+            var cb = window[name + "Callback"];
+            if(typeof cb === "function") {
+                cb();
+            }
+        }
+    }
+
+    // update alls Ui elements by value name
+    function updateOptionUi(name, value) {
+        var uiNodes = d.querySelectorAll('[data-name="' + name + '"]');
+        for(var i = 0; i < uiNodes.length; i++) {
+            var node = uiNodes[i];
+            if(node.nodeName === "INPUT" && node.getAttribute("type") == "checkbox") {
+                node.onchange = null;
+                node.checked = value;
+                node.dispatchEvent(new Event('change'));
+                node.onchange = optionToggled;
+            } else if(node.nodeName === "I") {
+                node.style.color = value?"#009933":"#990000";
+            }
+        }
+    }
+
+    class Menu {
+        constructor(id) {
+            id = id || "";
+            this.dropDown = createElement("ul");
+            this.dropDown.classList.add("dropdown-menu");
+            this.dropDown.setAttribute("role","menu");
+            this.id = id;
+        }
+
+        appendItem (node) {
+            this.dropDown.appendChild(node);
+        }
+
+        addItem (name, valName, enabled, callback) {
+            var itemLi = createElement("li");
+            var itemLink = createElement("a");
+
+            if(name !== undefined) {
+                itemLink.innerText = name;
+                itemLink.dataset.name = valName;
+                itemLink.onclick = optionClicked;
+            } else {
+                itemLink.classList.add("disabled");
+            }
+
+            if(enabled === false || name === undefined) {
+                itemLink.classList.add("disabled");
+            }
+
+            itemLink.href = "#";
+            itemLink.style.display = "block";
+            itemLi.appendChild(itemLink);
+            this.appendItem(itemLi);
+
+            return itemLi;
+        }
+
+        addOptionItem (name, valName, id, callback) {
+            var itemLink = this.addItem(null, null,true).getElementsByTagName("a")[0];
+            var itemLabel = createElement("span");
+            var itemInput = createElement("input");
+            var itemName = createElement("span");
+
+            itemLabel.innerHTML = "&nbsp;" + name;
+            if(id !== undefined) {
+                itemInput.dataset.id = id;
+            }
+
+            itemInput.type = "checkbox";
+            itemInput.dataset.name = valName;
+            itemInput.id = "toggle" + valName.ucFirst();
+            itemInput.onchange = optionToggled;
+            itemInput.classList.add("switch-check");
+            itemInput.dataset.onColor = "warning";
+            itemInput.dataset.size = "small";
+            itemInput.dataset.onText = "an";
+            itemInput.dataset.offText = "aus";
+            itemLink.classList.add("nichtSchliessenBeiKlick");
+            itemLink.style.cursor = "default";
+            itemLabel.setAttribute("for",itemInput.id);
+            //itemLabel.classList.add("hand");
+            //itemLabel.append(itemName);
+            itemLink.append(itemInput);
+            itemLink.append(itemLabel);
+        }
+
+        addDivider() {
+            var itemLi = createElement("li");
+            itemLi.setAttribute("role","separator");
+            itemLi.classList.add("divider");
+            this.appendItem(itemLi);
+        }
+
+        render() {
+            // create menu node
+            var menuLi = createElement("li");
+            var menuLink = createElement("a");
+            var menuDropdown = createElement("u");
+
+            menuLink.href = "#";
+            menuLink.classList.add("dropdown-toggle");
+            menuLink.dataset.toggle = "dropdown";
+            menuLink.innerHTML = "<span aria-hidden=\"true\" class=\"fa fa-rocket\"></span>Boost&nbsp;<b class=\"caret\"></b>";
+            menuLi.classList.add("dropdown");
+            menuLi.appendChild(menuLink);
+            menuLi.appendChild(this.dropDown);
+            menuLi.id = this.id;
+            return menuLi;
+        }
     }
 
     d.addEventListener('visibilitychange', focusChanged, false);
