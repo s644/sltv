@@ -333,13 +333,13 @@
         settingContainer.id = "boostSettingContainer";
         settingContainer.innerHTML = '<h1>Boost Einstellungen</h1>\
 <ul class="nav nav-tabs">\
-  <li role="presentation" class="active"><a data-toggle="tab" href="#boostAbout">Über</a></li>\
+<li role="presentation" class="active"><a data-toggle="tab" href="#boostAbout">Über</a></li>\
 </ul>\
 <div class="tab-content">\
 <div id="boostAbout" class="tab-pane fade in active">\
 <dl class="dl-horizontal">\
 <dt>Entwickler</dt>\
-<dd>Das Script ist ein privates Opensource Projekt von <span class="badge badgeLight hand" id="authorHandle">@' + GM_info.script.author + '</span> und steht in keiner Verbindung zu skylinetv.</dd>\
+<dd>Das Script ist ein privates opensource Projekt von <span class="badge badgeLight hand" id="authorHandle">@' + GM_info.script.author + '</span> und steht in keiner Verbindung zu skylinetv.</dd>\
 <dt>Datenschutz</dt>\
 <dd>Alle Daten werden lokal in deinem Browser gespeichert.</dd>\
 <dt>Version</dt>\
