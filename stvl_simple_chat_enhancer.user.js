@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.00
+// @version      1.10
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -30,6 +30,11 @@
         notifySound: false,
         notifyHandleSound: false,
         showYtMsg: false,
+        filterFinanceBot: true,
+        filterServerBot: true,
+        filterMusicBot: true,
+        filterReleaseBot: true,
+        filterActionBot: true,
         displayButtonbar: true,
         pipId: ""
     };
@@ -44,6 +49,15 @@
         keywords:[],
         lastContainer: "",
     };
+
+    // bots
+    var bots = {
+        financeBot: "Finanz-Bot James",
+        serverBot: "Server-Bot Nora",
+        musicBot: "Musik-Bot Gudrun",
+        releaseBot: "Veröffentlichungs-Bot Volker",
+        actionBot: "Aktions-Bot Claudia",
+    }
 
     /*
      *  https://notificationsounds.com/notification-sounds/when-604
@@ -157,7 +171,7 @@
         optionDiv.appendChild(icon);
 
         menu.addDivider();
-        var settingLink = menu.addItem("Über Boost v" + GM_info.script.version, "showSettings",).getElementsByTagName("a")[0];
+        var settingLink = menu.addItem("Einstellungen", "showSettings",).getElementsByTagName("a")[0];
         settingLink.href = "#";
 
         // style fix
@@ -180,6 +194,7 @@
                         var nickNode = mutation.addedNodes[2];
                         var nickColor = nickNode.style.color;
                         var specialNick = "";
+                        var botType = "";
 
                         // detect youtube, twitch, bot
                         if(nickNode.getElementsByClassName("fa-youtube").length) {
@@ -190,13 +205,14 @@
                             specialNick = "twitMsg";
                         } else if(nickNode.getElementsByClassName("fa-robot").length) {
                             switch(nickNode.innerText.match(/([^\s]*)\-Bot\s/)[1]) {
-                                case "Finanz": msg.classList.add("financeBot"); break;
-                                case "Aktions": msg.classList.add("actionBot"); break;
-                                case "Veröffentlichungs": msg.classList.add("releaseBot"); break;
-                                case "Musik": msg.classList.add("musicBot"); break;
+                                case "Finanz": botType = "financeBot"; break;
+                                case "Aktions": botType = "actionBot"; break;
+                                case "Veröffentlichungs": botType = "releaseBot"; break;
+                                case "Musik": botType = "musicBot"; break;
+                                case "Server": botType = "serverBot"; break;
                                 default:break;
                             }
-                            msg.classList.add("botMsg");
+                            msg.classList.add("botMsg", botType);
                             specialNick = "botMsg";
                         } else if(/^Gast\d{1,4}$/m.test(nickNode.innerText)) {
                             msg.classList.add("guestMsg");
@@ -205,7 +221,9 @@
 
                         // hide filtered messages
                         if(specialNick !== "" && !getValue("show" + specialNick.ucFirst())) {
-                            msg.classList.add("hide");
+                            if(specialNick !== "botMsg" || getValue("filter" + botType.ucFirst())) {
+                               msg.classList.add("hide");
+                            }
                         }
 
                         // add click event for real users
@@ -307,7 +325,7 @@
                         chat.removeChild(chat.firstChild);
                     }
 
-                    if(d.visibilityState == "hidden" && setting.initDone && (specialNick === "" || getValue("show" + specialNick.ucFirst()))) {
+                    if(d.visibilityState == "hidden" && setting.initDone && (specialNick === "" || getValue("show" + specialNick.ucFirst()) || (specialNick === "botMsg" && !getValue("filter" + botType.ucFirst())))) {
                         setting.unread++;
 
                         // play notification sound but only every 20th time in unfocused window and if priority sound hasn't been played
@@ -329,15 +347,15 @@
         });
 
         // create setting page
-        var settingContainer = createElement("div");
-        settingContainer.id = "boostSettingContainer";
-        settingContainer.innerHTML = '<h1>Boost Einstellungen</h1>\
-<ul class="nav nav-tabs">\
-<li role="presentation" class="active"><a data-toggle="tab" href="#boostAbout">Über</a></li>\
-</ul>\
-<div class="tab-content">\
-<div id="boostAbout" class="tab-pane fade in active">\
-<dl class="dl-horizontal">\
+        var settingContainer = new Container("boostSettingContainer");
+        settingContainer.prependHTML('<h1>Boost Einstellungen</h1>');
+        var botSetting = settingContainer.addPage("bots","Bots");
+        var aboutSetting = settingContainer.addPage("about","Über");
+        botSetting.innerHTML = "<p>Hier kannst du einstellen, welcher Bot Nachrichten Filter aktiv sein soll.</p>";
+        Object.keys(bots).forEach(function(bot) {
+            botSetting.appendChild(UiElement.toggleInput("filter" + bot.ucFirst(), bots[bot])).appendChild(createElement("br"));
+        });
+        aboutSetting.innerHTML = '<dl class="dl-horizontal">\
 <dt>Entwickler</dt>\
 <dd>Das Script ist ein privates opensource Projekt von <span class="badge badgeLight hand" id="authorHandle">@' + GM_info.script.author + '</span> und steht in keiner Verbindung zu skylinetv.</dd>\
 <dt>Datenschutz</dt>\
@@ -351,15 +369,17 @@
 <dt>Changelog</dt>\
 <dd><a href="https://github.com/s644/sltv/commits/master" target="_blank">Commits</a></dd>\
 <dt>Fehler gefunden?</dt>\
-<dd><a href="' + GM_info.script.supportURL + '" target="_blank">Melden!</a></dd>\
-</dl>\
-</div>\
-</div>\
-<hr style="border-color:#404040;"><button type="button" class="btn btn-danger" id="closeSettings">Schließen</button>';
-        settingContainer.classList.add("col-md-9","hauptcontainer");
-        d.querySelector("div#auktionscontainer").parentNode.prepend(settingContainer);
+<dd><a href="' + GM_info.script.supportURL + '" target="_blank">Melden!</a></dd>';
+
+        settingContainer.appendHTML('<hr style="border-color:#404040;"><button type="button" class="btn btn-danger" id="closeSettings">Schließen</button>');
+        d.querySelector("div#auktionscontainer").parentNode.prepend(settingContainer.render());
         d.querySelector("button#closeSettings").onclick = closeSettings;
         d.querySelector("span#authorHandle").addEventListener("click", () => {addNickHandle(GM_info.script.author)});
+
+        // load bot filter values
+        Object.keys(bots).forEach(function(bot) {
+            updateOptionUi("filter" + bot.ucFirst(), "filter" + bot.ucFirst());
+        });
 
         // dirty workaround for first init
         setTimeout(function(){setting.initDone = true;}, 500);
@@ -378,7 +398,7 @@
     // add boost styles
     function addStyles() {
         // global
-        GM_addStyle(".hand{cursor:pointer;} .hide{display:none;} span.badgeLight{font-weight:normal; background-color:#44444491;}a.disabled {color:gray;pointer-events: none;}");
+        GM_addStyle(".hand{cursor:pointer;} .hide{display:none;} span.badgeLight{font-weight:normal; background-color:#44444491;}a.disabled {color:gray;pointer-events: none;} div.serverBot{color:#009933;} ");
         // PiP
         GM_addStyle("#pip{display:flex;width:100%;position:relative;} #pip > div {width:50%;flex:1;} #pip > iframe{width:100%;flex:1;}");
         // option list
@@ -435,8 +455,23 @@
     // toggle visibility of special messages
     function toggleMsg(messageType) {
         var chat = d.getElementById("chatinhalt");
-        var msgs = chat.getElementsByClassName(messageType);
-        Array.prototype.forEach.call(msgs,function(msg) {msg.classList.toggle("hide")})
+        if(messageType !== "botMsg") {
+            let msgs = chat.querySelectorAll("." + messageType);
+            if(getValue("show" + messageType.ucFirst())) {
+                Array.prototype.forEach.call(msgs,function(msg) {msg.classList.remove("hide")})
+            } else {
+                Array.prototype.forEach.call(msgs,function(msg) {msg.classList.add("hide")})
+            }
+        } else {
+            Object.keys(bots).forEach(function(bot) {
+                let msgs = chat.querySelectorAll("." + bot);
+                if(!getValue("show" + messageType.ucFirst()) && getValue("filter" + bot.ucFirst())) {
+                    Array.prototype.forEach.call(msgs,function(msg) {msg.classList.add("hide")})
+                } else {
+                    Array.prototype.forEach.call(msgs,function(msg) {msg.classList.remove("hide")})
+                }
+            });
+        }
         chat.scrollTop = chat.scrollHeight;
     }
 
@@ -596,6 +631,13 @@
         toggleMsg("guestMsg");
     }
 
+    // toggle bot filter
+    window.filterActionBotCallback = function () {toggleMsg("botMsg");}
+    window.filterReleaseBotCallback = function () {toggleMsg("botMsg");}
+    window.filterMusicBotCallback = function () {toggleMsg("botMsg");}
+    window.filterServerBotCallback = function () {toggleMsg("botMsg");}
+    window.filterFinanceBotCallback = function () {toggleMsg("botMsg");}
+
     // define keywords
     window.searchStringCallback = function () {
         var keywords = prompt("Hier kannst du - mit Komma getrennt - Wörter eingeben,\nwelche in Nachrichten gesucht und hervorgehoben werden.\nBeispiel: wert1,@youtubenick", getValue("searchString"));
@@ -715,6 +757,81 @@
         }
     }
 
+    // page container
+    class Container {
+        constructor(id) {
+            this.container = createElement("div");
+            this.container.id = id;
+            this.container.classList.add("col-md-9","hauptcontainer");
+            this.tabLinks = createElement("ul");
+            this.tabLinks.classList.add("nav","nav-tabs");
+            this.tabContent = createElement("div");
+            this.tabContent.classList.add("tab-content");
+            this.container.appendChild(this.tabLinks);
+            this.container.appendChild(this.tabContent);
+            this.firstAdded = false;
+        }
+
+        addPage(id, title) {
+
+            var link = createElement("li");
+            link.setAttribute("role","presentation");
+            link.innerHTML = '<a data-toggle="tab" href="#boost' + id.ucFirst() + '">' + title + '</a>';
+            this.tabLinks.appendChild(link);
+
+            var content = createElement("div");
+            content.classList.add("tab-pane","fade","in");
+            content.id = "boost" + id.ucFirst();
+            this.tabContent.appendChild(content);
+
+            if(!this.firstAdded){
+                content.classList.add("active");
+                link.classList.add("active");
+                link.click("active");
+                this.firstAdded = true;
+            }
+
+            return content
+        }
+
+        appendHTML(html) {
+            this.container.insertAdjacentHTML('beforeend', html);
+        }
+
+        prependHTML(html) {
+            this.container.insertAdjacentHTML('afterbegin', html);
+        }
+
+        render() {
+            return this.container;
+        }
+    }
+
+    // fancy elements
+    class UiElement {
+        static toggleInput(valName, label) {
+            var itemInput = createElement("input");
+            itemInput.type = "checkbox";
+            itemInput.dataset.name = valName;
+            itemInput.onchange = optionToggled;
+            itemInput.classList.add("switch-check");
+            itemInput.dataset.onColor = "warning";
+            itemInput.dataset.size = "small";
+            itemInput.dataset.onText = "an";
+            itemInput.dataset.offText = "aus";
+
+            if(label !== undefined) {
+                var itemWrapper = createElement("span");
+                itemWrapper.innerHTML = " " + label;
+                itemWrapper.prepend(itemInput);
+                return itemWrapper;
+            } else {
+                return itemInput;
+            }
+        }
+    }
+
+    // dropdown menu
     class Menu {
         constructor(id) {
             id = id || "";
@@ -755,28 +872,18 @@
         addOptionItem (name, valName, id, callback) {
             var itemLink = this.addItem(null, null,true).getElementsByTagName("a")[0];
             var itemLabel = createElement("span");
-            var itemInput = createElement("input");
+            var itemInput = UiElement.toggleInput(valName);
             var itemName = createElement("span");
 
             itemLabel.innerHTML = "&nbsp;" + name;
             if(id !== undefined) {
                 itemInput.dataset.id = id;
             }
-
-            itemInput.type = "checkbox";
-            itemInput.dataset.name = valName;
             itemInput.id = "toggle" + valName.ucFirst();
-            itemInput.onchange = optionToggled;
-            itemInput.classList.add("switch-check");
-            itemInput.dataset.onColor = "warning";
-            itemInput.dataset.size = "small";
-            itemInput.dataset.onText = "an";
-            itemInput.dataset.offText = "aus";
+
             itemLink.classList.add("nichtSchliessenBeiKlick");
             itemLink.style.cursor = "default";
             itemLabel.setAttribute("for",itemInput.id);
-            //itemLabel.classList.add("hand");
-            //itemLabel.append(itemName);
             itemLink.append(itemInput);
             itemLink.append(itemLabel);
         }
