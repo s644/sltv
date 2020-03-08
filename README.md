@@ -1,4 +1,4 @@
-# Simple Chat Enhancer for Skylinetv.live
+# Boost for Skylinetv.live
 
 # [>> Click to install <<](https://github.com/s644/sltv/raw/master/stvl_simple_chat_enhancer.user.js)
 
