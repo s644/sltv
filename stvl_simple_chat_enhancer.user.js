@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.10
+// @version      1.11
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -351,7 +351,7 @@
         settingContainer.prependHTML('<h1>Boost Einstellungen</h1>');
         var botSetting = settingContainer.addPage("bots","Bots");
         var aboutSetting = settingContainer.addPage("about","Über");
-        botSetting.innerHTML = "<p>Hier kannst du einstellen, welcher Bot Nachrichten Filter aktiv sein soll.</p>";
+        botSetting.innerHTML = "<p>Hier kannst du einstellen, welcher Bot Nachrichten Filter (bei globalem Bot Filter) aktiv sein soll.</p>";
         Object.keys(bots).forEach(function(bot) {
             botSetting.appendChild(UiElement.toggleInput("filter" + bot.ucFirst(), bots[bot])).appendChild(createElement("br"));
         });
