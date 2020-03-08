@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.11
+// @version      1.12
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -378,7 +378,7 @@
 
         // load bot filter values
         Object.keys(bots).forEach(function(bot) {
-            updateOptionUi("filter" + bot.ucFirst(), "filter" + bot.ucFirst());
+            updateOptionUi("filter" + bot.ucFirst(), getValue("filter" + bot.ucFirst()));
         });
 
         // dirty workaround for first init
