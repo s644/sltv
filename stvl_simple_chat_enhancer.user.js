@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.12
+// @version      1.14
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -36,6 +36,9 @@
         filterReleaseBot: true,
         filterActionBot: true,
         displayButtonbar: true,
+        enableMarkup: true,
+        brightenUp: true,
+        smallUserlist: true,
         pipId: ""
     };
 
@@ -178,8 +181,14 @@
         chat.style.marginTop = "-15px";
         chat.style.height = (parseInt(chat.style.height) - parseInt(getValue("displayButtonbar")?parseInt(optionDiv.offsetHeight)+5:-22)).toString() + "px";
 
+        // init userlist
+        window.smallUserlistCallback();
+
         //observer chatlist
         var observeChat = new MutationObserver(function(mutations) {
+            var enableMarkup = getValue("enableMarkup");
+            var brightenUp = getValue("brightenUp");
+
             mutations.forEach(function(mutation) {
 
                 // only process messages
@@ -233,12 +242,14 @@
                             nickNode.title = "@" + nickNode.innerText + " einfügen";
                         }
 
-                        // make nicknames slightly brighter if contrast is to low
-                        var contrast = testContrast("rgb(10,10,10)",nickColor);
-                        var contrastThreshold = 80;
+                        // make nicknames slightly brighter if contrast is too low
+                        if(brightenUp) {
+                            var contrast = testContrast("rgb(10,10,10)",nickColor);
+                            var contrastThreshold = 80;
 
-                        if( contrast < contrastThreshold) {
-                            nickNode.style.color = pSBC((contrastThreshold - contrast)/100, nickColor);
+                            if( contrast < contrastThreshold) {
+                                nickNode.style.color = pSBC((contrastThreshold - contrast)/100, nickColor);
+                            }
                         }
                     }
 
@@ -277,7 +288,10 @@
                                 text = text.replace(/@([^\s]+)/g,"<span class=\"badge badgeLight\">$1</span>");
                             }
 
-                            text = text.replace(/\b_([^_]+)_\b/g,"<i>$1</i>").replace(/\*([^\*g]+|[^\*]{2,})\*/g,"<strong>$1</strong>").replace(/~([^~]+)~/g,"<strike>$1</strike>");
+                            // basic markupSupport
+                            if(enableMarkup) {
+                                text = text.replace(/\b_([^_]+)_\b/g,"<i>$1</i>").replace(/\*([^\*g]+|[^\*]{2,})\*/g,"<strong>$1</strong>").replace(/~([^~]+)~/g,"<strike>$1</strike>");
+                            }
 
                             var urlMatch = text.match(urlRegex);
 
@@ -350,7 +364,14 @@
         var settingContainer = new Container("boostSettingContainer");
         settingContainer.prependHTML('<h1>Boost Einstellungen</h1>');
         var botSetting = settingContainer.addPage("bots","Bots");
+        var miscSetting = settingContainer.addPage("misc","Sonstiges");
         var aboutSetting = settingContainer.addPage("about","Über");
+        miscSetting.innerHTML = "<p>Ein Ändern einer der Optionen wirkt sich erst auf neue Nachrichten, bzw. nach dem Neuladen der Seite aus. </p>";
+        miscSetting.appendChild(UiElement.toggleInput("brightenUp", "schlecht lesbare Nicknamen aufhellen")).appendChild(createElement("br"));
+        miscSetting.appendChild(UiElement.toggleInput("enableMarkup", "Markup aktivieren (*<b>fett</b>*,_<i>kursiv</i>_,~<strike>durchgestrichen</strike>~)")).appendChild(createElement("br"));
+        miscSetting.appendChild(UiElement.toggleInput("smallUserlist", "kompakte Nutzerliste")).appendChild(createElement("br"));
+        //miscSetting.appendChild(UiElement.textInput("keywords", "Bla", 6)).appendChild(createElement("br"));
+
         botSetting.innerHTML = "<p>Hier kannst du einstellen, welcher Bot Nachrichten Filter (bei globalem Bot Filter) aktiv sein soll.</p>";
         Object.keys(bots).forEach(function(bot) {
             botSetting.appendChild(UiElement.toggleInput("filter" + bot.ucFirst(), bots[bot])).appendChild(createElement("br"));
@@ -376,11 +397,6 @@
         d.querySelector("button#closeSettings").onclick = closeSettings;
         d.querySelector("span#authorHandle").addEventListener("click", () => {addNickHandle(GM_info.script.author)});
 
-        // load bot filter values
-        Object.keys(bots).forEach(function(bot) {
-            updateOptionUi("filter" + bot.ucFirst(), getValue("filter" + bot.ucFirst()));
-        });
-
         // dirty workaround for first init
         setTimeout(function(){setting.initDone = true;}, 500);
     }
@@ -403,6 +419,8 @@
         GM_addStyle("#pip{display:flex;width:100%;position:relative;} #pip > div {width:50%;flex:1;} #pip > iframe{width:100%;flex:1;}");
         // option list
         GM_addStyle("#optionList{padding:0 10px;} #optionList > i{;margin:0 2px 0 2px;}");
+        // userlist
+        GM_addStyle("#userlistcontainer.boostList table > tbody > tr > td {padding:2px;}");
     }
 
     // add pip container
@@ -706,8 +724,28 @@
             activeNodes[i].classList.remove("active");
         }
 
+        // load bot filter values
+        Object.keys(bots).forEach(function(bot) {
+            updateOptionUi("filter" + bot.ucFirst(), getValue("filter" + bot.ucFirst()));
+        });
+
+        // load misc setting values
+        updateOptionUi("brightenUp", getValue("brightenUp"));
+        updateOptionUi("enableMarkup", getValue("enableMarkup"));
+        updateOptionUi("smallUserlist", getValue("smallUserlist"));
+
         d.querySelector("li#boostMenu").classList.add("active");
         d.querySelector("div#boostSettingContainer").style.display = "block";
+        d.querySelectorAll("div#boostSettingContainer>ul>li>a")[0].click();
+    }
+
+    // toggle small userlist
+    window.smallUserlistCallback = function () {
+        if(getValue("smallUserlist")) {
+            d.querySelector("#userlistcontainer").classList.add("boostList");
+        } else {
+            d.querySelector("#userlistcontainer").classList.remove("boostList");
+        }
     }
 
     // close setting container
@@ -809,10 +847,15 @@
 
     // fancy elements
     class UiElement {
-        static toggleInput(valName, label) {
+        static createInput(type, valName) {
             var itemInput = createElement("input");
-            itemInput.type = "checkbox";
+            itemInput.type = type;
             itemInput.dataset.name = valName;
+            return itemInput;
+        }
+
+        static toggleInput(valName, label) {
+            var itemInput = UiElement.createInput("checkbox", valName);
             itemInput.onchange = optionToggled;
             itemInput.classList.add("switch-check");
             itemInput.dataset.onColor = "warning";
@@ -828,6 +871,24 @@
             } else {
                 return itemInput;
             }
+        }
+
+        static textInput(valName, label, size) {
+            var row = createElement("div");
+            var group = createElement("div");
+            var wrapper = createElement("div");
+            row.className = "row";
+            wrapper.className = "col-lg-" + parseInt(size);
+            group.className = "input-group";
+            var itemInput = UiElement.createInput("text", valName);
+            itemInput.className = "form-control";
+            var btn = createElement("span");
+            btn.innerHTML = '<button class="btn btn-default" type="button">Go!</button>';
+            btn.className = "input-group-btn";
+            group.appendChild(itemInput).appendChild(btn);
+            wrapper.appendChild(group);
+            row.appendChild(wrapper);
+            return row;
         }
     }
 
