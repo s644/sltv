@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.14
+// @version      1.20
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -39,6 +39,7 @@
         enableMarkup: true,
         brightenUp: true,
         smallUserlist: true,
+        highlightUserMsg: true,
         pipId: ""
     };
 
@@ -188,6 +189,7 @@
         var observeChat = new MutationObserver(function(mutations) {
             var enableMarkup = getValue("enableMarkup");
             var brightenUp = getValue("brightenUp");
+            var highlightUserMsg = getValue("highlightUserMsg");
 
             mutations.forEach(function(mutation) {
 
@@ -239,8 +241,14 @@
                         if(specialNick === "" || specialNick === "guestMsg") {
                             nickNode.addEventListener("click", function(){addNickHandle(nickNode.innerText)}, false);
                             nickNode.classList.add("hand");
-                            nickNode.title = "@" + nickNode.innerText + " einfügen";
+                            nickNode.title = "@" + nickNode.innerText + " einfügen";                            
                         }
+
+                        // hightlight all messages from user
+                        let fullId = specialNick + nickNode.innerText;
+                        msg.dataset.user = fullId;
+                        msg.addEventListener("mouseover", function(){highlightMsgByNick(fullId, true)}, false);
+                        msg.addEventListener("mouseout", function(){highlightMsgByNick(fullId, false)}, false);
 
                         // make nicknames slightly brighter if contrast is too low
                         if(brightenUp) {
@@ -369,6 +377,7 @@
         miscSetting.innerHTML = "<p>Ein Ändern einer der Optionen wirkt sich erst auf neue Nachrichten, bzw. nach dem Neuladen der Seite aus. </p>";
         miscSetting.appendChild(UiElement.toggleInput("brightenUp", "schlecht lesbare Nicknamen aufhellen")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("enableMarkup", "Markup aktivieren (*<b>fett</b>*,_<i>kursiv</i>_,~<strike>durchgestrichen</strike>~)")).appendChild(createElement("br"));
+        miscSetting.appendChild(UiElement.toggleInput("highlightUserMsg", "alle Nachrichten eines Benutzers bei überfahren mit Zeiger hervorheben")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("smallUserlist", "kompakte Nutzerliste")).appendChild(createElement("br"));
         //miscSetting.appendChild(UiElement.textInput("keywords", "Bla", 6)).appendChild(createElement("br"));
 
@@ -414,7 +423,7 @@
     // add boost styles
     function addStyles() {
         // global
-        GM_addStyle(".hand{cursor:pointer;} .hide{display:none;} span.badgeLight{font-weight:normal; background-color:#44444491;}a.disabled {color:gray;pointer-events: none;} div.serverBot{color:#009933;} ");
+        GM_addStyle(".hand{cursor:pointer;} .hide{display:none;} span.badgeLight{font-weight:normal; background-color:#44444491;}a.disabled {color:gray;pointer-events: none;} div.serverBot{color:#009933;} .msgHighlight{ background-color: rgba(255,255,255,.09);}");
         // PiP
         GM_addStyle("#pip{display:flex;width:100%;position:relative;} #pip > div {width:50%;flex:1;} #pip > iframe{width:100%;flex:1;}");
         // option list
@@ -448,6 +457,19 @@
             let audio = new Audio(src);
             audio.onended = function(){setting.notificationThrottle = false;};
             audio.play();
+        }
+    }
+
+    // hightlight messages
+    function highlightMsgByNick(nick, mode) {
+        if(getValue("highlightUserMsg")) {
+            var chat = d.getElementById("chatinhalt");
+            let msgs = chat.querySelectorAll('div[data-user="' + nick + '"]');
+            if(mode) {
+                Array.prototype.forEach.call(msgs,function(msg) {msg.classList.add("msgHighlight")});
+            } else {
+                Array.prototype.forEach.call(msgs,function(msg) {msg.classList.remove("msgHighlight")});
+            }
         }
     }
 
@@ -733,6 +755,7 @@
         updateOptionUi("brightenUp", getValue("brightenUp"));
         updateOptionUi("enableMarkup", getValue("enableMarkup"));
         updateOptionUi("smallUserlist", getValue("smallUserlist"));
+        updateOptionUi("highlightUserMsg", getValue("highlightUserMsg"));
 
         d.querySelector("li#boostMenu").classList.add("active");
         d.querySelector("div#boostSettingContainer").style.display = "block";
