@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.20
+// @version      1.21
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -245,7 +245,7 @@
                         }
 
                         // hightlight all messages from user
-                        let fullId = specialNick + nickNode.innerText;
+                        let fullId = specialNick + nickNode.innerText.replace('"',"_");
                         msg.dataset.user = fullId;
                         msg.addEventListener("mouseover", function(){highlightMsgByNick(fullId, true)}, false);
                         msg.addEventListener("mouseout", function(){highlightMsgByNick(fullId, false)}, false);
