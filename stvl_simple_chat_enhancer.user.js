@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.25
+// @version      1.26
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -376,14 +376,14 @@
         settingContainer.prependHTML('<h1>Boost Einstellungen</h1>');
         var botSetting = settingContainer.addPage("bots","Bots");
         var miscSetting = settingContainer.addPage("misc","Sonstiges");
-        var aboutSetting = settingContainer.addPage("about","Über");
-        miscSetting.innerHTML = "<p>Ein Ändern einer der Optionen wirkt sich erst auf neue Nachrichten, bzw. nach dem Neuladen der Seite aus. </p>";
-        miscSetting.appendChild(UiElement.toggleInput("brightenUp", "schlecht lesbare Nicknamen aufhellen")).appendChild(createElement("br"));
-        miscSetting.appendChild(UiElement.toggleInput("enableMarkup", "Markup aktivieren (*<b>fett</b>*,_<i>kursiv</i>_,~<strike>durchgestrichen</strike>~)")).appendChild(createElement("br"));
+        var aboutSetting = settingContainer.addPage("about","Über");        
+        miscSetting.appendChild(UiElement.toggleInput("brightenUp", "schlecht lesbare Nicknamen aufhellen<span class=\"text-danger\">*</span>")).appendChild(createElement("br"));
+        miscSetting.appendChild(UiElement.toggleInput("enableMarkup", "Markup aktivieren<span class=\"text-danger\">*</span> (*<b>fett</b>*,_<i>kursiv</i>_,~<strike>durchgestrichen</strike>~)")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("highlightUserMsg", "alle Nachrichten eines Benutzers bei überfahren mit Zeiger hervorheben")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("smallUserlist", "kompakte Nutzerliste")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("notifyAfterUpdate", "zeige Hinweis nach einem Boost Update")).appendChild(createElement("br"));
         //miscSetting.appendChild(UiElement.textInput("keywords", "Bla", 6)).appendChild(createElement("br"));
+        miscSetting.innerHTML += "<p class=\"margin-top-sm\"><span class=\"text-danger\">*</span>  wirkt sich erst auf neue Nachrichten, bzw. nach dem Neuladen der Seite aus</p>";
 
         botSetting.innerHTML = "<p>Hier kannst du einstellen, welcher Bot Nachrichten Filter (bei globalem Bot Filter) aktiv sein soll.</p>";
         Object.keys(bots).forEach(function(bot) {
@@ -420,6 +420,7 @@
                         text:       "Boost wurde auf Version " +GM_info.script.version.toString() + " aktualisiert.\n\nHier klicken für Neuerungen",
                         title:      "Boost Update erfolgreich",
                         timeout:    10000,
+                        image:      "https://skylinetv.live/wp-content/uploads/2019/07/favicon-32x32.png",
                         onclick:    function () {
                             var win = window.open("https://github.com/s644/sltv/commits/master", '_blank');
                             win.focus();
@@ -443,7 +444,7 @@
     // add boost styles
     function addStyles() {
         // global
-        GM_addStyle(".hand{cursor:pointer;} .hide{display:none;} span.badgeLight{font-weight:normal; background-color:#44444491;}a.disabled {color:gray;pointer-events: none;} div.serverBot{color:#009933;} .msgHighlight{ background-color: rgba(255,255,255,.09);}");
+        GM_addStyle(".hand{cursor:pointer;} .hide{display:none;} span.badgeLight{font-weight:normal; background-color:#44444491;}a.disabled {color:gray;pointer-events: none;} .margin-top-sm { margin-top: .5em; } div.serverBot{color:#009933;} .msgHighlight{ background-color: rgba(255,255,255,.09);}");
         // PiP
         GM_addStyle("#pip{display:flex;width:100%;position:relative;} #pip > div {width:50%;flex:1;} #pip > iframe{width:100%;flex:1;}");
         // option list
@@ -908,8 +909,9 @@
             itemInput.dataset.offText = "aus";
 
             if(label !== undefined) {
-                var itemWrapper = createElement("span");
+                var itemWrapper = createElement("div");
                 itemWrapper.innerHTML = " " + label;
+                itemWrapper.classList.add("margin-top-sm");
                 itemWrapper.prepend(itemInput);
                 return itemWrapper;
             } else {
