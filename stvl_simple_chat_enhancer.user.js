@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.21
+// @version      1.23
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -40,7 +40,9 @@
         brightenUp: true,
         smallUserlist: true,
         highlightUserMsg: true,
-        pipId: ""
+        pipId: "",
+        notifyAfterUpdate: true,
+        oldVersion: 0.00,
     };
 
     // temp values
@@ -241,7 +243,7 @@
                         if(specialNick === "" || specialNick === "guestMsg") {
                             nickNode.addEventListener("click", function(){addNickHandle(nickNode.innerText)}, false);
                             nickNode.classList.add("hand");
-                            nickNode.title = "@" + nickNode.innerText + " einfügen";                            
+                            nickNode.title = "@" + nickNode.innerText + " einfügen";
                         }
 
                         // hightlight all messages from user
@@ -379,6 +381,7 @@
         miscSetting.appendChild(UiElement.toggleInput("enableMarkup", "Markup aktivieren (*<b>fett</b>*,_<i>kursiv</i>_,~<strike>durchgestrichen</strike>~)")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("highlightUserMsg", "alle Nachrichten eines Benutzers bei überfahren mit Zeiger hervorheben")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("smallUserlist", "kompakte Nutzerliste")).appendChild(createElement("br"));
+        miscSetting.appendChild(UiElement.toggleInput("notifyAfterUpdate", "zeige Hinweis nach einem Boost Update")).appendChild(createElement("br"));
         //miscSetting.appendChild(UiElement.textInput("keywords", "Bla", 6)).appendChild(createElement("br"));
 
         botSetting.innerHTML = "<p>Hier kannst du einstellen, welcher Bot Nachrichten Filter (bei globalem Bot Filter) aktiv sein soll.</p>";
@@ -407,7 +410,15 @@
         d.querySelector("span#authorHandle").addEventListener("click", () => {addNickHandle(GM_info.script.author)});
 
         // dirty workaround for first init
-        setTimeout(function(){setting.initDone = true;}, 500);
+        setTimeout(function(){
+            setting.initDone = true;
+            if(getValue("oldVersion") < parseFloat(GM_info.script.version)) {
+                setValue("oldVersion", parseFloat(GM_info.script.version));
+                if(getValue("notifyAfterUpdate")) {
+                    alert("Boost wurde auf Version " +GM_info.script.version.toString() + " aktualisiert.\nNeuerungen findest du unter Einstellungen > Über > Changelog.");
+                }
+            }
+        }, 500);
     }
 
     // add favicon
@@ -756,6 +767,7 @@
         updateOptionUi("enableMarkup", getValue("enableMarkup"));
         updateOptionUi("smallUserlist", getValue("smallUserlist"));
         updateOptionUi("highlightUserMsg", getValue("highlightUserMsg"));
+        updateOptionUi("notifyAfterUpdate", getValue("notifyAfterUpdate"));
 
         d.querySelector("li#boostMenu").classList.add("active");
         d.querySelector("div#boostSettingContainer").style.display = "block";
