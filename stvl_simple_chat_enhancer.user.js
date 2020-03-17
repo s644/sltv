@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.23
+// @version      1.25
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -12,6 +12,7 @@
 // @grant        GM_setValue
 // @grant        GM_getValue
 // @grant        GM_addStyle
+// @grant        GM_notification
 // @run-at       document-end
 // ==/UserScript==
 
@@ -415,7 +416,15 @@
             if(getValue("oldVersion") < parseFloat(GM_info.script.version)) {
                 setValue("oldVersion", parseFloat(GM_info.script.version));
                 if(getValue("notifyAfterUpdate")) {
-                    alert("Boost wurde auf Version " +GM_info.script.version.toString() + " aktualisiert.\nNeuerungen findest du unter Einstellungen > Über > Changelog.");
+                    GM_notification({
+                        text:       "Boost wurde auf Version " +GM_info.script.version.toString() + " aktualisiert.\n\nHier klicken für Neuerungen",
+                        title:      "Boost Update erfolgreich",
+                        timeout:    10000,
+                        onclick:    function () {
+                            var win = window.open("https://github.com/s644/sltv/commits/master", '_blank');
+                            win.focus();
+                        }
+                    });
                 }
             }
         }, 500);
