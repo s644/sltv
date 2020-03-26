@@ -17,6 +17,7 @@ This script has the following features:
 * play notification sound on mentions or keyword findings (throttled)
 * save personal settings
 * add favicon to tab
+* hide voting messages (hides messages containing only numbers between 1 - 20)
 
 
 developed for _https://www.tampermonkey.net/_
