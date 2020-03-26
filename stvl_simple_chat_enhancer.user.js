@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.28
+// @version      1.29
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -27,6 +27,7 @@
         showGuestMsg: true,
         showBotMsg: true,
         showTwitMsg: true,
+        showVoteMsg: true,
         shortenLink: true,
         notifySound: false,
         notifyHandleSound: false,
@@ -106,9 +107,9 @@
         var chat = d.querySelector('div#chatinhalt');
 
         // option container
-        var specialNicks = ["fa,fa-youtube","fa,fa-twitch","fa,fa-robot","fas,fa-pray"];
-        var specialClass = ["ytMsg","twitMsg","botMsg","guestMsg"];
-        var specialNames = ["Youtube","Twitch","Bot","Gast"];
+        var specialNicks = ["fa,fa-youtube","fa,fa-twitch","fa,fa-robot","fas,fa-pray","fas,fa-poll-h"];
+        var specialClass = ["ytMsg","twitMsg","botMsg","guestMsg","voteMsg"];
+        var specialNames = ["Youtube","Twitch","Bot","Gast", "Voting"];
 
         var optionDiv = createElement('div');
         optionDiv.id = "optionList";
@@ -264,6 +265,8 @@
                         }
                     }
 
+                    var voteDetected = false;
+
                     mutation.addedNodes.forEach(function(node, i) {
 
                         // delete original node...
@@ -294,6 +297,19 @@
                             }
 
                             var text = node.data.replace(/</g,"&lt;").replace("@" + setting.nick, '<span class="badge">' + setting.nick + '</span>');
+
+                            // detect vote message ": 15"
+                            if(text.length > 2 && text.length < 5 && !voteDetected) {
+                                let num = parseInt(text.replace(": ",""));
+                                if(!isNaN(num) && num > 0 && num < 21) {
+                                    specialNick = "voteMsg";
+                                    msg.classList.add("voteMsg");
+                                    if(!getValue("showVoteMsg")) {
+                                        msg.classList.add("hide");
+                                    }
+                                    voteDetected = true;
+                                }
+                            }
 
                             if(setting.nick == nickNode.innerText) {
                                 text = text.replace(/@([^\s]+)/g,"<span class=\"badge badgeLight\">$1</span>");
@@ -690,6 +706,11 @@
     // toggle guest message visibility
     window.showGuestMsgCallback = function () {
         toggleMsg("guestMsg");
+    }
+
+    // toggle vote message visibility
+    window.showVoteMsgCallback = function () {
+        toggleMsg("voteMsg");
     }
 
     // toggle bot filter
