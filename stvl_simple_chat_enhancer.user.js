@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.31
+// @version      1.32
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -95,7 +95,7 @@
         d.querySelector('.navbar-right').prepend(menu.render());
 
         // get nick name
-        loadNick();
+        //loadNick();
 
         // add favicon
         addFav();
@@ -428,7 +428,7 @@
 
         // dirty workaround for first init
         setTimeout(function(){
-            setting.initDone = true;
+            //setting.initDone = true;
             if(getValue("oldVersion") < parseFloat(GM_info.script.version)) {
                 setValue("oldVersion", parseFloat(GM_info.script.version));
                 if(getValue("notifyAfterUpdate")) {
@@ -560,13 +560,19 @@
         for(var i = 0; i < nickNodes.length; i++) {
             if(nickNodes[i].innerText.length > 0) {
                 setting.nick = nickNodes[i].innerText;
+                setting.initDone = true;
+                GM_log("Hi " + setting.nick + "!");
+                init();
                 break;
             }
         }
 
         // workaround for guest nick, cause they load after document ready
-        if(setting.nick.length === 0 && tries < 10) {
-            setTimeout(function(){loadNick(tries++)},1000);
+        if(setting.nick.length === 0 && tries < 20) {
+            setTimeout(function(){loadNick(tries++)},500);
+        } else if (setting.nick.length === 0) {
+            setting.nick = "failed to load";
+            alert("Boost konnte deinen Namen nicht ermitteln und wird nicht korrekt funktionieren :(");
         }
     }
 
@@ -1043,5 +1049,5 @@
     }
 
     d.addEventListener('visibilitychange', focusChanged, false);
-    init();
+    loadNick();
 })();
