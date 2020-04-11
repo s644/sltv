@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.34
+// @version      1.35
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -33,11 +33,12 @@
         notifyHandleSound: false,
         showYtMsg: true,
         filterFinanceBot: true,
-        filterServerBot: true,
+        filterServerBot: false,
         filterMusicBot: true,
-        filterReleaseBot: true,
+        filterReleaseBot: false,
         filterActionBot: true,
         filterDiscordBot: true,
+        filterHelperBot: false,
         displayButtonbar: true,
         enableMarkup: true,
         brightenUp: true,
@@ -67,6 +68,7 @@
         releaseBot: "Veröffentlichungs-Bot Volker",
         actionBot: "Aktions-Bot Claudia",
         discordBot: "Discord-Bot Günther",
+        helperBot: "Hilfs-Bot Hugo"
     }
 
     /*
@@ -228,6 +230,7 @@
                                 case "Musik": botType = "musicBot"; break;
                                 case "Server": botType = "serverBot"; break;
                                 case "Discord": botType = "discordBot"; break;
+                                case "Hilfs": botType = "helperBot"; break;
                                 default:break;
                             }
                             msg.classList.add("botMsg", botType);
@@ -726,6 +729,7 @@
     window.filterServerBotCallback = function () {toggleMsg("botMsg");}
     window.filterFinanceBotCallback = function () {toggleMsg("botMsg");}
     window.filterDiscordBotCallback = function () {toggleMsg("botMsg");}
+    window.filterHelperBotCallback = function () {toggleMsg("botMsg");}
 
     // define keywords
     window.searchStringCallback = function () {
