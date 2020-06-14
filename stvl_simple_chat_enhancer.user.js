@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.35
+// @version      1.40
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -28,17 +28,18 @@
         showBotMsg: true,
         showTwitMsg: true,
         showVoteMsg: true,
+        showReplayMsg: true,
         shortenLink: true,
         notifySound: false,
         notifyHandleSound: false,
         showYtMsg: true,
         filterFinanceBot: true,
-        filterServerBot: false,
+        filterServerBot: true,
         filterMusicBot: true,
-        filterReleaseBot: false,
+        filterReleaseBot: true,
         filterActionBot: true,
         filterDiscordBot: true,
-        filterHelperBot: false,
+        filterHelperBot: true,
         displayButtonbar: true,
         enableMarkup: true,
         brightenUp: true,
@@ -69,6 +70,16 @@
         actionBot: "Aktions-Bot Claudia",
         discordBot: "Discord-Bot Günther",
         helperBot: "Hilfs-Bot Hugo"
+    }
+
+    // emotes
+    var emotes = {
+        skylin15AdamWolkeUnterwegs: "301833391",
+        skylin15DenkenderAdam: "301833427",
+        skylin15Elsa: "301833452",
+        skylin15SchluckWasser: "301833248",
+        skylin15Shining: "301833331",
+        skylin15AdamAufgebrezelt: "301833486",
     }
 
     /*
@@ -111,9 +122,9 @@
         var chat = d.querySelector('div#chatinhalt');
 
         // option container
-        var specialNicks = ["fa,fa-youtube","fa,fa-twitch","fa,fa-robot","fas,fa-pray","fas,fa-poll-h"];
-        var specialClass = ["ytMsg","twitMsg","botMsg","guestMsg","voteMsg"];
-        var specialNames = ["Youtube","Twitch","Bot","Gast", "Voting"];
+        var specialNicks = ["fa,fa-youtube","fa,fa-twitch","fa,fa-robot","fas,fa-pray","fas,fa-poll-h","fas,fa-play-circle"];
+        var specialClass = ["ytMsg","twitMsg","botMsg","guestMsg","voteMsg","replayMsg"];
+        var specialNames = ["Youtube","Twitch","Bot","Gast", "Voting","Replay"];
 
         var optionDiv = createElement('div');
         optionDiv.id = "optionList";
@@ -222,6 +233,9 @@
                         } else if(nickNode.getElementsByClassName("fa-twitch").length) {
                             msg.classList.add("twitMsg");
                             specialNick = "twitMsg";
+                        } else if(mutation.addedNodes[0].classList.contains("fa-play-circle")) {
+                            msg.classList.add("replayMsg");
+                            specialNick = "replayMsg";
                         } else if(nickNode.getElementsByClassName("fa-robot").length) {
                             switch(nickNode.innerText.match(/([^\s]*)\-Bot\s/)[1]) {
                                 case "Finanz": botType = "financeBot"; break;
@@ -302,7 +316,9 @@
                                 }
                             }
 
-                            var text = node.data.replace(/</g,"&lt;").replace("@" + setting.nick, '<span class="badge">' + setting.nick + '</span>');
+                            var text = node.data.replace(/</g,"&lt;");
+
+                            text = text.replace("@" + setting.nick, '<span class="badge">' + setting.nick + '</span>');
 
                             // detect vote message ": 15"
                             if(text.length > 2 && text.length < 5 && !voteDetected) {
@@ -337,6 +353,12 @@
                                     text = text.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">" + urlMatch[0] + "</a>");
                                 }
                             }
+
+                            // replace emote (upcoming feature, waiting for concession
+                            Object.keys(emotes).forEach(function(emote) {
+                                var emoteRegex = new RegExp('\\b' + emote +'\\b','g');
+                                //text = text.replace(emoteRegex, '<img height="16" src="https://static-cdn.jtvnw.net/emoticons/v1/'+emotes[emote]+'/1.0">');
+                            });
 
                             // search for keywords
                             if(setting.keywords[0] !== "") {
@@ -720,6 +742,11 @@
     // toggle vote message visibility
     window.showVoteMsgCallback = function () {
         toggleMsg("voteMsg");
+    }
+
+    // toggle replay message visibility
+    window.showReplayMsgCallback = function () {
+        toggleMsg("replayMsg");
     }
 
     // toggle bot filter
