@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.40
+// @version      1.41
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -354,7 +354,7 @@
                                 }
                             }
 
-                            // replace emote (upcoming feature, waiting for concession
+                            // replace emote (upcoming feature, waiting for concession)
                             Object.keys(emotes).forEach(function(emote) {
                                 var emoteRegex = new RegExp('\\b' + emote +'\\b','g');
                                 //text = text.replace(emoteRegex, '<img height="16" src="https://static-cdn.jtvnw.net/emoticons/v1/'+emotes[emote]+'/1.0">');
@@ -376,6 +376,11 @@
                                         }
                                     }
                                 });
+                            }
+
+                            // brighten up replay messages
+                            if(specialNick === 'replayMsg') {
+                                wrapNode.style = "color: #fff;";
                             }
 
                             // highlight my user name
