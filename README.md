@@ -11,7 +11,7 @@ This script has the following features:
 * basic markup support
 * usernames with bad contrast are brightened up
 * shows unread messages in tab title if tab is unfocused
-* hide youtube/twitch/bot/guest messages
+* hide youtube/twitch/bot/guest/replay messages
 * define your own keywords to search for
 * play notification sound on new messages in unfocused window state (throttled)
 * play notification sound on mentions or keyword findings (throttled)
