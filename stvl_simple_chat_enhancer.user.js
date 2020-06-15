@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.44
+// @version      1.46
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -40,6 +40,7 @@
         filterActionBot: true,
         filterDiscordBot: true,
         filterHelperBot: true,
+        filterWinnerBot: true,
         displayButtonbar: true,
         enableMarkup: true,
         brightenUp: true,
@@ -69,7 +70,8 @@
         releaseBot: "Veröffentlichungs-Bot Volker",
         actionBot: "Aktions-Bot Claudia",
         discordBot: "Discord-Bot Günther",
-        helperBot: "Hilfs-Bot Hugo"
+        helperBot: "Hilfs-Bot Hugo",
+        winnerBot: "Victoria die Sieges-Böttin"
     }
 
     // emotes
@@ -238,7 +240,7 @@
                             specialNick = "replayMsg";
                         } else if(nickNode.getElementsByClassName("fa-robot").length) {
                             if(nickNode.innerText.match(/([^\s]*)\-Bot\s/)) {
-                                switch(nickNode.innerText.match(/([^\s]*)\-Bot\s/)[1]) {
+                                switch(nickNode.innerText.match(/([^\s]*)\-B(?:ö|o)t/)[1]) {
                                     case "Finanz": botType = "financeBot"; break;
                                     case "Aktions": botType = "actionBot"; break;
                                     case "Veröffentlichungs": botType = "releaseBot"; break;
@@ -246,6 +248,7 @@
                                     case "Server": botType = "serverBot"; break;
                                     case "Discord": botType = "discordBot"; break;
                                     case "Hilfs": botType = "helperBot"; break;
+                                    case "Sieges": botType = "winnerBot"; break;
                                     default:break;
                                 }
                                 msg.classList.add("botMsg", botType);
@@ -764,6 +767,7 @@
     window.filterFinanceBotCallback = function () {toggleMsg("botMsg");}
     window.filterDiscordBotCallback = function () {toggleMsg("botMsg");}
     window.filterHelperBotCallback = function () {toggleMsg("botMsg");}
+    window.filterWinnerBotCallback = function () {toggleMsg("botMsg");}
 
     // define keywords
     window.searchStringCallback = function () {
