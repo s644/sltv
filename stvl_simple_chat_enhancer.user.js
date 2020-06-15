@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.43
+// @version      1.44
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -237,17 +237,19 @@
                             msg.classList.add("replayMsg");
                             specialNick = "replayMsg";
                         } else if(nickNode.getElementsByClassName("fa-robot").length) {
-                            switch(nickNode.innerText.match(/([^\s]*)\-Bot\s/)[1]) {
-                                case "Finanz": botType = "financeBot"; break;
-                                case "Aktions": botType = "actionBot"; break;
-                                case "Veröffentlichungs": botType = "releaseBot"; break;
-                                case "Musik": botType = "musicBot"; break;
-                                case "Server": botType = "serverBot"; break;
-                                case "Discord": botType = "discordBot"; break;
-                                case "Hilfs": botType = "helperBot"; break;
-                                default:break;
+                            if(nickNode.innerText.match(/([^\s]*)\-Bot\s/)) {
+                                switch(nickNode.innerText.match(/([^\s]*)\-Bot\s/)[1]) {
+                                    case "Finanz": botType = "financeBot"; break;
+                                    case "Aktions": botType = "actionBot"; break;
+                                    case "Veröffentlichungs": botType = "releaseBot"; break;
+                                    case "Musik": botType = "musicBot"; break;
+                                    case "Server": botType = "serverBot"; break;
+                                    case "Discord": botType = "discordBot"; break;
+                                    case "Hilfs": botType = "helperBot"; break;
+                                    default:break;
+                                }
+                                msg.classList.add("botMsg", botType);
                             }
-                            msg.classList.add("botMsg", botType);
                             specialNick = "botMsg";
                         } else if(/^Gast\d{1,4}$/m.test(nickNode.innerText)) {
                             msg.classList.add("guestMsg");
