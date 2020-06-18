@@ -18,6 +18,6 @@ This script has the following features:
 * save personal settings
 * add favicon to tab
 * hide voting messages (hides messages containing only numbers between 1 - 20)
-
+* reload page on lost connection (e.g. server restart)
 
 developed for _https://www.tampermonkey.net/_
