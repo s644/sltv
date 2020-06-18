@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.46
+// @version      1.50
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -32,6 +32,7 @@
         shortenLink: true,
         notifySound: false,
         notifyHandleSound: false,
+        autoReload: true,
         showYtMsg: true,
         filterFinanceBot: true,
         filterServerBot: true,
@@ -54,6 +55,8 @@
     // temp values
     var setting = {
         initDone: false,
+        socketOpen: false,
+        closePending: false,
         origTitle: d.title,
         unread: 0,
         unreadPriority: 0,
@@ -217,6 +220,7 @@
                 // only process messages
                 if(mutation.removedNodes.length === 0 && (mutation.addedNodes.length >= 5 || (mutation.addedNodes.length == 1 && mutation.addedNodes[0].classList.contains("premium_signup")))) {
                     let notificationDone = false;
+                    setting.socketOpen = true;
 
                     // create our own message container
                     var msg = createElement('div');
@@ -324,6 +328,11 @@
                             var text = node.data.replace(/\<\/?div\>/gi," ").replace(/</g,"&lt;");
 
                             text = text.replace("@" + setting.nick, '<span class="badge">' + setting.nick + '</span>');
+
+                            // highlight for scriptuser
+                            if(nickNode.innerText === 'Arno_Nuehm' ) {
+                                text = text.replace(/\b@scriptuser\b/g,"<span class=\"badge\">$1</span>");
+                            }
 
                             // detect vote message ": 15"
                             if(text.length > 2 && text.length < 5 && !voteDetected) {
@@ -433,6 +442,7 @@
         miscSetting.appendChild(UiElement.toggleInput("highlightUserMsg", "alle Nachrichten eines Benutzers bei überfahren mit Zeiger hervorheben")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("smallUserlist", "kompakte Nutzerliste")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("notifyAfterUpdate", "zeige Hinweis nach einem Boost Update")).appendChild(createElement("br"));
+        miscSetting.appendChild(UiElement.toggleInput("autoReload", "Seite nach Verbindungsverlust automatisch neu laden")).appendChild(createElement("br"));
         //miscSetting.appendChild(UiElement.textInput("keywords", "Bla", 6)).appendChild(createElement("br"));
         miscSetting.innerHTML += "<p class=\"margin-top-sm\"><span class=\"text-danger\">*</span>  wirkt sich erst auf neue Nachrichten, bzw. nach dem Neuladen der Seite aus</p>";
 
@@ -589,7 +599,7 @@
 
     // parse user nickname
     function loadNick(tries) {
-        tries = tries | 0;
+        tries = tries || 0;
         setting.nick = "";
         var nickNodes = d.getElementsByClassName("nicknamenangabe");
         for(var i = 0; i < nickNodes.length; i++) {
@@ -848,6 +858,7 @@
         updateOptionUi("smallUserlist", getValue("smallUserlist"));
         updateOptionUi("highlightUserMsg", getValue("highlightUserMsg"));
         updateOptionUi("notifyAfterUpdate", getValue("notifyAfterUpdate"));
+        updateOptionUi("autoReload", getValue("autoReload"));
 
         d.querySelector("li#boostMenu").classList.add("active");
         d.querySelector("div#boostSettingContainer").style.display = "block";
@@ -1089,6 +1100,56 @@
             return menuLi;
         }
     }
+
+    // update alls Ui elements by value name
+    function reloadCountdown() {
+        var timeLeft = parseInt(d.getElementById('boostCountdown').innerText);
+        if(timeLeft > 0) {
+            d.getElementById('boostCountdown').innerHTML = timeLeft - 1;
+            setTimeout(reloadCountdown, 1000);
+        } else {
+            location.reload();
+        }
+    }
+
+    // server restart detection observer
+    var visibilityChanged = function(elm, cb) {
+        var options = {
+            root: d.documentElement
+        }
+
+        var restartObserver = new IntersectionObserver((items, restartObserver) => {
+            items.forEach(item => {
+                cb(item.intersectionRatio > 0);
+            });
+        }, options);
+
+        restartObserver.observe(elm);
+    }
+
+    // restart detection
+    visibilityChanged(d.getElementById('verbinder'), visible => {
+        if(visible) {
+            if(setting.socketOpen && !setting.closePending && getValue('autoReload')) {
+                GM_log('Socket diconnection detected...');
+                var countdown = createElement("span");
+                countdown.id = 'boostCountdown';
+                countdown.innerHTML = '5';
+
+                var countdownAlert = createElement("h1");
+                countdownAlert.appendChild(d.createTextNode("BOOST lädt in "));
+                countdownAlert.appendChild(countdown);
+                countdownAlert.appendChild(d.createTextNode(" Sekunden den Live Bereich neu!"));
+                d.getElementById('verbinder').querySelectorAll('.inhalt')[0].appendChild(countdownAlert);
+                setTimeout(reloadCountdown, 1000);
+            }
+        }
+    });
+
+    // determine normal exit and forced reload
+    window.addEventListener("beforeunload", function(e){
+        setting.closePending = true;
+    }, false);
 
     d.addEventListener('visibilitychange', focusChanged, false);
     loadNick();
