@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.51
+// @version      1.52
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -243,8 +243,8 @@
                             msg.classList.add("replayMsg");
                             specialNick = "replayMsg";
                         } else if(nickNode.getElementsByClassName("fa-robot").length) {
-                            if(nickNode.innerText.match(/([^\s]*)\-Bot\s/)) {
-                                switch(nickNode.innerText.match(/([^\s]*)\-B(?:ö|o)t/)[1]) {
+                            if(nickNode.innerText.match(/([^\s]*)\-B(?:\u00f6|o)t/)) {
+                                switch(nickNode.innerText.match(/([^\s]*)\-B(?:\u00f6|o)t/)[1]) {
                                     case "Finanz": botType = "financeBot"; break;
                                     case "Aktions": botType = "actionBot"; break;
                                     case "Veröffentlichungs": botType = "releaseBot"; break;
@@ -905,7 +905,7 @@
         }
     }
 
-    // update all Ui elements by value name
+    // update alls Ui elements by value name
     function updateOptionUi(name, value) {
         var uiNodes = d.querySelectorAll('[data-name="' + name + '"]');
         for(var i = 0; i < uiNodes.length; i++) {
@@ -1101,7 +1101,7 @@
         }
     }
 
-    // countdown till reload
+    // update alls Ui elements by value name
     function reloadCountdown() {
         var timeLeft = parseInt(d.getElementById('boostCountdown').innerText);
         if(timeLeft > 0) {
