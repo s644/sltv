@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.53
+// @version      1.54
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -57,6 +57,7 @@
         initDone: false,
         socketOpen: false,
         closePending: false,
+        reloadPending: false,
         origTitle: d.title,
         unread: 0,
         unreadPriority: 0,
@@ -1103,12 +1104,14 @@
 
     // countdown till reload
     function reloadCountdown() {
-        var timeLeft = parseInt(d.getElementById('boostCountdown').innerText);
-        if(timeLeft > 0) {
-            d.getElementById('boostCountdown').innerHTML = timeLeft - 1;
-            setTimeout(reloadCountdown, 1000);
-        } else {
-            location.reload();
+        if(setting.reloadPending) {
+            var timeLeft = parseInt(d.getElementById('boostCountdown').innerText);
+            if(timeLeft > 0) {
+                d.getElementById('boostCountdown').innerHTML = timeLeft - 1;
+                setTimeout(reloadCountdown, 1000);
+            } else {
+                location.reload();
+            }
         }
     }
 
@@ -1132,17 +1135,26 @@
         if(visible) {
             if(setting.socketOpen && !setting.closePending && getValue('autoReload')) {
                 GM_log('Socket disconnection detected...');
-                var countdown = createElement("span");
-                countdown.id = 'boostCountdown';
-                countdown.innerHTML = '5';
+                var countdown;
+                if(!d.querySelector('#boostCountdown')) {
+                    countdown = createElement("span");
+                    countdown.id = 'boostCountdown';
 
-                var countdownAlert = createElement("h1");
-                countdownAlert.appendChild(d.createTextNode("BOOST lädt in "));
-                countdownAlert.appendChild(countdown);
-                countdownAlert.appendChild(d.createTextNode(" Sekunden den Live Bereich neu!"));
-                d.getElementById('verbinder').querySelectorAll('.inhalt')[0].appendChild(countdownAlert);
+                    var countdownAlert = createElement("h1");
+                    countdownAlert.appendChild(d.createTextNode("BOOST lädt in "));
+                    countdownAlert.appendChild(countdown);
+                    countdownAlert.appendChild(d.createTextNode(" Sekunden den Live Bereich neu!"));
+                    d.getElementById('verbinder').querySelectorAll('.inhalt')[0].appendChild(countdownAlert);
+                } else {
+                    countdown = d.querySelector('#boostCountdown');
+                }
+
+                countdown.innerHTML = '5';
+                setting.reloadPending = true;
                 setTimeout(reloadCountdown, 1000);
             }
+        } else {
+            setting.reloadPending = false;
         }
     });
 
