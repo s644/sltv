@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.54
+// @version      1.60
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -49,12 +49,14 @@
         highlightUserMsg: true,
         pipId: "",
         notifyAfterUpdate: true,
+        notifyOnCutStream: true,
         oldVersion: 0.00,
     };
 
     // temp values
     var setting = {
         initDone: false,
+        msgsLoaded: false,
         socketOpen: false,
         closePending: false,
         reloadPending: false,
@@ -257,6 +259,7 @@
                                     default:break;
                                 }
                                 msg.classList.add("botMsg", botType);
+
                             }
                             specialNick = "botMsg";
                         } else if(/^Gast\d{1,4}$/m.test(nickNode.innerText)) {
@@ -324,6 +327,16 @@
                                     // only notify once, if priority and normal notification is activated
                                     notificationDone = true;
                                 }
+                            }
+
+                            // detect cut streams
+                            if(specialNick === "botMsg" && botType === "financeBot" && getValue("notifyOnCutStream") && node.data.match(/(.*) spendete .*€ für die Aktion '(Adam|Jana)! Herkommen! Arbeiten!!'! Aktion erfüllt!!!/) && setting.msgsLoaded) {
+                                GM_notification({
+                                    text:       "Einige Ehrenzuschauende haben die Arbeitsaktion voll gemacht!",
+                                    title:      "Ein Stream startet in Kürze!",
+                                    timeout:    10000,
+                                    image:      "https://skylinetv.live/wp-content/uploads/2019/07/favicon-32x32.png",
+                                });
                             }
 
                             var text = node.data.replace(/\<\/?div\>/gi," ").replace(/</g,"&lt;");
@@ -443,6 +456,7 @@
         miscSetting.appendChild(UiElement.toggleInput("highlightUserMsg", "alle Nachrichten eines Benutzers bei überfahren mit Zeiger hervorheben")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("smallUserlist", "kompakte Nutzerliste")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("notifyAfterUpdate", "zeige Hinweis nach einem Boost Update")).appendChild(createElement("br"));
+        miscSetting.appendChild(UiElement.toggleInput("notifyOnCutStream", "zeige Hinweis bei Erfüllung der Arbeitsaktion")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("autoReload", "Seite nach Verbindungsverlust automatisch neu laden")).appendChild(createElement("br"));
         //miscSetting.appendChild(UiElement.textInput("keywords", "Bla", 6)).appendChild(createElement("br"));
         miscSetting.innerHTML += "<p class=\"margin-top-sm\"><span class=\"text-danger\">*</span>  wirkt sich erst auf neue Nachrichten, bzw. nach dem Neuladen der Seite aus</p>";
@@ -859,6 +873,7 @@
         updateOptionUi("smallUserlist", getValue("smallUserlist"));
         updateOptionUi("highlightUserMsg", getValue("highlightUserMsg"));
         updateOptionUi("notifyAfterUpdate", getValue("notifyAfterUpdate"));
+        updateOptionUi("notifyOnCutStream", getValue("notifyOnCutStream"));
         updateOptionUi("autoReload", getValue("autoReload"));
 
         d.querySelector("li#boostMenu").classList.add("active");
@@ -1133,6 +1148,7 @@
     // restart detection
     visibilityChanged(d.getElementById('verbinder'), visible => {
         if(visible) {
+            setting.msgsLoaded = false;
             if(setting.socketOpen && !setting.closePending && getValue('autoReload')) {
                 GM_log('Socket disconnection detected...');
                 var countdown;
@@ -1155,6 +1171,7 @@
             }
         } else {
             setting.reloadPending = false;
+            setting.msgsLoaded = true;
         }
     });
 
