@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.62
+// @version      1.70
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -46,6 +46,7 @@
         enableMarkup: true,
         brightenUp: true,
         smallUserlist: true,
+        maxChat: true,
         highlightUserMsg: true,
         pipId: "",
         notifyAfterUpdate: true,
@@ -127,7 +128,23 @@
         // add pip container
         addPipContainer();
 
+        // convert sidebar to flexbox
+        var sideBar = d.querySelector('div#rechtespalte');
+        sideBar.classList.add('boostFlex');
+
         var chat = d.querySelector('div#chatinhalt');
+
+        // wrap chat input area
+        var inputWrapper = createElement('div');
+        inputWrapper.appendChild(d.querySelector('#chatzeile'))
+        sideBar.appendChild(inputWrapper);
+
+        // adjust chat attributes
+        chat.style.height = null;
+        chat.style.marginBottom = '0';
+        chat.style.position = 'relative';
+        chat.style.bottom = '0';
+
 
         // option container
         var specialNicks = ["fa,fa-youtube","fa,fa-twitch","fa,fa-robot","fas,fa-pray","fas,fa-poll-h","fas,fa-play-circle"];
@@ -207,10 +224,20 @@
 
         // style fix
         chat.style.marginTop = "-15px";
-        chat.style.height = (parseInt(chat.style.height) - parseInt(getValue("displayButtonbar")?parseInt(optionDiv.offsetHeight)+5:-22)).toString() + "px";
+        //chat.style.height = (parseInt(chat.style.height) - parseInt(getValue("displayButtonbar")?parseInt(optionDiv.offsetHeight)+5:-22)).toString() + "px";
 
         // init userlist
         window.smallUserlistCallback();
+        window.maxChatCallback();
+
+        // convert sidebar to flexbox
+        var userList = d.querySelector('div#userlistcontainer');
+        userList.querySelectorAll('table')[0].parentNode.id = 'collapseUserList';
+        userList.querySelectorAll('table')[0].parentNode.classList.add('collapse');
+        userList.querySelectorAll('h4')[0].parentNode.style.padding = '1px 1px 1px 10px';
+        userList.querySelectorAll('h4')[0].style.fontSize = '14px';
+        userList.style.minHeight = '40px';
+        userList.querySelectorAll('.panel-heading')[0].innerHTML = '<a data-toggle="collapse" href="#collapseUserList">' + userList.querySelectorAll('.panel-heading')[0].innerHTML + '</a>';
 
         //observer chatlist
         var observeChat = new MutationObserver(function(mutations) {
@@ -330,7 +357,7 @@
                             }
 
                             // detect cut streams
-                            if(specialNick === "botMsg" && botType === "financeBot" && getValue("notifyOnCutStream") && node.data.match(/(.*) spendete .*€ für die Aktion '(Adam|Jana)! Herkommen! (Arbeiten|Schneiden)!!'! Aktion erfüllt!!!/) && setting.msgsLoaded) {
+                            if(specialNick === "botMsg" && botType === "financeBot" && getValue("notifyOnCutStream") && node.data.match(/(.*) spendete .*€ für die Aktion '(Adam|Jana)! Herkommen! (Schneiden|Arbeiten)!!'! Aktion erfüllt!!!/) && setting.msgsLoaded) {
                                 GM_notification({
                                     text:       "Einige Ehrenzuschauende haben die Arbeitsaktion voll gemacht!",
                                     title:      "Ein Stream startet in Kürze!",
@@ -455,6 +482,7 @@
         miscSetting.appendChild(UiElement.toggleInput("enableMarkup", "Markup aktivieren<span class=\"text-danger\">*</span> (*<b>fett</b>*,_<i>kursiv</i>_,~<strike>durchgestrichen</strike>~)")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("highlightUserMsg", "alle Nachrichten eines Benutzers bei überfahren mit Zeiger hervorheben")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("smallUserlist", "kompakte Nutzerliste")).appendChild(createElement("br"));
+        miscSetting.appendChild(UiElement.toggleInput("maxChat", "Chat Fenster maximieren")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("notifyAfterUpdate", "zeige Hinweis nach einem Boost Update")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("notifyOnCutStream", "zeige Hinweis bei Erfüllung der Arbeitsaktion")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("autoReload", "Seite nach Verbindungsverlust automatisch neu laden")).appendChild(createElement("br"));
@@ -520,7 +548,7 @@
     // add boost styles
     function addStyles() {
         // global
-        GM_addStyle(".hand{cursor:pointer;} .hide{display:none;} span.badgeLight{font-weight:normal; background-color:#44444491;}a.disabled {color:gray;pointer-events: none;} .margin-top-sm { margin-top: .5em; } div.serverBot{color:#009933;} .msgHighlight{ background-color: rgba(255,255,255,.09);}");
+        GM_addStyle(".hand{cursor:pointer;} .hide{display:none;} span.badgeLight{font-weight:normal; background-color:#44444491;}a.disabled {color:gray;pointer-events: none;} .margin-top-sm { margin-top: .5em; } div.serverBot{color:#009933;} .msgHighlight{ background-color: rgba(255,255,255,.09);} .boostFlex{display:flex;flex-direction:column;}");
         // PiP
         GM_addStyle("#pip{display:flex;width:100%;position:relative;} #pip > div {width:50%;flex:1;} #pip > iframe{width:100%;flex:1;}");
         // option list
@@ -871,6 +899,7 @@
         updateOptionUi("brightenUp", getValue("brightenUp"));
         updateOptionUi("enableMarkup", getValue("enableMarkup"));
         updateOptionUi("smallUserlist", getValue("smallUserlist"));
+        updateOptionUi("maxChat", getValue("maxChat"));
         updateOptionUi("highlightUserMsg", getValue("highlightUserMsg"));
         updateOptionUi("notifyAfterUpdate", getValue("notifyAfterUpdate"));
         updateOptionUi("notifyOnCutStream", getValue("notifyOnCutStream"));
@@ -887,6 +916,18 @@
             d.querySelector("#userlistcontainer").classList.add("boostList");
         } else {
             d.querySelector("#userlistcontainer").classList.remove("boostList");
+        }
+    }
+
+    // toggle max chat window
+    window.maxChatCallback = function () {
+        var userList = d.querySelector('div#userlistcontainer');
+        if(getValue("maxChat")) {
+            userList.querySelectorAll('table')[0].parentNode.classList.remove('in');
+            userList.style.height = 'auto';
+        } else {
+            userList.querySelectorAll('table')[0].parentNode.classList.add('in');
+            userList.style.height = '100%';
         }
     }
 
