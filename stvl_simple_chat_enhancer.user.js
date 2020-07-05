@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.70
+// @version      1.71
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -47,6 +47,7 @@
         brightenUp: true,
         smallUserlist: true,
         maxChat: true,
+        isUserListCollapsed: true,
         highlightUserMsg: true,
         pipId: "",
         notifyAfterUpdate: true,
@@ -225,20 +226,38 @@
         // style fix
         chat.style.marginTop = "-15px";
         //chat.style.height = (parseInt(chat.style.height) - parseInt(getValue("displayButtonbar")?parseInt(optionDiv.offsetHeight)+5:-22)).toString() + "px";
-
-        // init userlist
-        window.smallUserlistCallback();
-        window.maxChatCallback();
-
-        // convert sidebar to flexbox
+        
+        // userlist adjustments
         var userList = d.querySelector('div#userlistcontainer');
-        userList.querySelectorAll('table')[0].parentNode.id = 'collapseUserList';
-        userList.querySelectorAll('table')[0].parentNode.classList.add('collapse');
+        var userListTable = userList.querySelectorAll('table')[0].parentNode;
+        userListTable.id = 'collapseUserList';
+        userListTable.classList.add('collapse');
+        if(getValue('isUserListCollapsed')) {
+            userListTable.classList.add('in');
+        }
         userList.querySelectorAll('h4')[0].parentNode.style.padding = '1px 1px 1px 10px';
         userList.querySelectorAll('h4')[0].style.fontSize = '14px';
         userList.style.minHeight = '40px';
-        userList.querySelectorAll('.panel-heading')[0].innerHTML = '<a data-toggle="collapse" href="#collapseUserList">' + userList.querySelectorAll('.panel-heading')[0].innerHTML + '</a>';
 
+        // dirty startup hack
+        setValue('isUserListCollapsed',!getValue('isUserListCollapsed'));
+
+        var collapseLink = createElement('a');
+        var collapseLinkState = createElement('i');
+        collapseLinkState.id = 'collapseLinkState';
+        collapseLinkState.classList.add('fas','fa-expand-alt');
+        collapseLinkState.style.marginLeft = '5px';
+        collapseLink.onclick = collapseLinkCallback;
+        collapseLink.dataset.toggle = 'collapse';
+        collapseLink.href = '#collapseUserList';
+        userList.querySelectorAll('h4')[0].appendChild(collapseLinkState);
+        collapseLink.appendChild(userList.querySelectorAll('h4')[0]);
+        userList.querySelectorAll('.panel-heading')[0].appendChild(collapseLink);
+
+        // init userlist
+        window.smallUserlistCallback();
+        //window.maxChatCallback();
+        window.collapseLinkCallback();
         //observer chatlist
         var observeChat = new MutationObserver(function(mutations) {
             var enableMarkup = getValue("enableMarkup");
@@ -482,7 +501,6 @@
         miscSetting.appendChild(UiElement.toggleInput("enableMarkup", "Markup aktivieren<span class=\"text-danger\">*</span> (*<b>fett</b>*,_<i>kursiv</i>_,~<strike>durchgestrichen</strike>~)")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("highlightUserMsg", "alle Nachrichten eines Benutzers bei überfahren mit Zeiger hervorheben")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("smallUserlist", "kompakte Nutzerliste")).appendChild(createElement("br"));
-        miscSetting.appendChild(UiElement.toggleInput("maxChat", "Chat Fenster maximieren")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("notifyAfterUpdate", "zeige Hinweis nach einem Boost Update")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("notifyOnCutStream", "zeige Hinweis bei Erfüllung der Arbeitsaktion")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("autoReload", "Seite nach Verbindungsverlust automatisch neu laden")).appendChild(createElement("br"));
@@ -899,7 +917,6 @@
         updateOptionUi("brightenUp", getValue("brightenUp"));
         updateOptionUi("enableMarkup", getValue("enableMarkup"));
         updateOptionUi("smallUserlist", getValue("smallUserlist"));
-        updateOptionUi("maxChat", getValue("maxChat"));
         updateOptionUi("highlightUserMsg", getValue("highlightUserMsg"));
         updateOptionUi("notifyAfterUpdate", getValue("notifyAfterUpdate"));
         updateOptionUi("notifyOnCutStream", getValue("notifyOnCutStream"));
@@ -919,16 +936,27 @@
         }
     }
 
-    // toggle max chat window
-    window.maxChatCallback = function () {
+    // resize user list on collapsing
+    window.collapseLinkCallback = function () {
+        var chat = d.getElementById("chatinhalt");
         var userList = d.querySelector('div#userlistcontainer');
-        if(getValue("maxChat")) {
-            userList.querySelectorAll('table')[0].parentNode.classList.remove('in');
+        var userListTable = d.querySelector('div#collapseUserList');
+        var collapseLinkState = d.querySelector('i#collapseLinkState');
+        if(getValue('isUserListCollapsed')) {
             userList.style.height = 'auto';
+            userList.style.minHeight = '40px';
+            collapseLinkState.classList.remove('fa-compress-alt');
+            collapseLinkState.classList.add('fa-expand-alt');
+            setValue('isUserListCollapsed', false);
         } else {
-            userList.querySelectorAll('table')[0].parentNode.classList.add('in');
             userList.style.height = '100%';
+            userList.style.minHeight = '30%';
+            collapseLinkState.classList.remove('fa-expand-alt');
+            collapseLinkState.classList.add('fa-compress-alt');
+            setValue('isUserListCollapsed', true);
         }
+
+        chat.scrollTop = chat.scrollHeight;
     }
 
     // close setting container
