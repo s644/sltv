@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.71
+// @version      1.73
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -46,7 +46,6 @@
         enableMarkup: true,
         brightenUp: true,
         smallUserlist: true,
-        maxChat: true,
         isUserListCollapsed: true,
         highlightUserMsg: true,
         pipId: "",
@@ -225,16 +224,16 @@
 
         // style fix
         chat.style.marginTop = "-15px";
-        //chat.style.height = (parseInt(chat.style.height) - parseInt(getValue("displayButtonbar")?parseInt(optionDiv.offsetHeight)+5:-22)).toString() + "px";
-        
+
+        // merch cart adjustments
+        d.querySelector('div#warenkorb').style.height = 'auto';
+        d.querySelector('div#warenkorb').style.minHeight = '66%';
+        d.querySelector('div#warenkorb').style.marginTop = '-20px';
+
         // userlist adjustments
         var userList = d.querySelector('div#userlistcontainer');
         var userListTable = userList.querySelectorAll('table')[0].parentNode;
         userListTable.id = 'collapseUserList';
-        userListTable.classList.add('collapse');
-        if(getValue('isUserListCollapsed')) {
-            userListTable.classList.add('in');
-        }
         userList.querySelectorAll('h4')[0].parentNode.style.padding = '1px 1px 1px 10px';
         userList.querySelectorAll('h4')[0].style.fontSize = '14px';
         userList.style.minHeight = '40px';
@@ -248,8 +247,7 @@
         collapseLinkState.classList.add('fas','fa-expand-alt');
         collapseLinkState.style.marginLeft = '5px';
         collapseLink.onclick = collapseLinkCallback;
-        collapseLink.dataset.toggle = 'collapse';
-        collapseLink.href = '#collapseUserList';
+        collapseLink.href = '#';
         userList.querySelectorAll('h4')[0].appendChild(collapseLinkState);
         collapseLink.appendChild(userList.querySelectorAll('h4')[0]);
         userList.querySelectorAll('.panel-heading')[0].appendChild(collapseLink);
@@ -947,12 +945,14 @@
             userList.style.minHeight = '40px';
             collapseLinkState.classList.remove('fa-compress-alt');
             collapseLinkState.classList.add('fa-expand-alt');
+            userListTable.classList.add('hide');
             setValue('isUserListCollapsed', false);
         } else {
             userList.style.height = '100%';
             userList.style.minHeight = '30%';
             collapseLinkState.classList.remove('fa-expand-alt');
             collapseLinkState.classList.add('fa-compress-alt');
+            userListTable.classList.remove('hide');
             setValue('isUserListCollapsed', true);
         }
 
