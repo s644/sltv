@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.73
+// @version      1.74
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -224,6 +224,7 @@
 
         // style fix
         chat.style.marginTop = "-15px";
+        chat.style.height = "100%";
 
         // merch cart adjustments
         d.querySelector('div#warenkorb').style.height = 'auto';
@@ -564,7 +565,7 @@
     // add boost styles
     function addStyles() {
         // global
-        GM_addStyle(".hand{cursor:pointer;} .hide{display:none;} span.badgeLight{font-weight:normal; background-color:#44444491;}a.disabled {color:gray;pointer-events: none;} .margin-top-sm { margin-top: .5em; } div.serverBot{color:#009933;} .msgHighlight{ background-color: rgba(255,255,255,.09);} .boostFlex{display:flex;flex-direction:column;}");
+        GM_addStyle(".hand{cursor:pointer;} .hide{display:none;} span.badgeLight{font-weight:normal; background-color:#44444491;}a.disabled {color:gray;pointer-events: none;} .margin-top-sm { margin-top: .5em; } div.serverBot{color:#009933;} .msgHighlight{ background-color: rgba(255,255,255,.09);} .boostFlex{display:flex;flex-direction:column;align-items:stretch;}");
         // PiP
         GM_addStyle("#pip{display:flex;width:100%;position:relative;} #pip > div {width:50%;flex:1;} #pip > iframe{width:100%;flex:1;}");
         // option list
@@ -948,7 +949,7 @@
             userListTable.classList.add('hide');
             setValue('isUserListCollapsed', false);
         } else {
-            userList.style.height = '100%';
+            userList.style.height = null;
             userList.style.minHeight = '30%';
             collapseLinkState.classList.remove('fa-expand-alt');
             collapseLinkState.classList.add('fa-compress-alt');
