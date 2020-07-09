@@ -20,5 +20,6 @@ This script has the following features:
 * hide voting messages (hides messages containing only numbers between 1 - 20)
 * reload page on lost connection (e.g. server restart)
 * maximize the chatwindow
+* themed scrollbars for supported browsers
 
 developed for _https://www.tampermonkey.net/_
