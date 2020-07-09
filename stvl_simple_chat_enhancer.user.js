@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.80
+// @version      1.81
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -566,7 +566,7 @@
     function addStyles() {
         // global
         GM_addStyle(".hand{cursor:pointer;} .hide{display:none;} span.badgeLight{font-weight:normal; background-color:#44444491;}a.disabled {color:gray;pointer-events: none;} .margin-top-sm { margin-top: .5em; } div.serverBot{color:#009933;} .msgHighlight{ background-color: rgba(255,255,255,.09);} .boostFlex{display:flex;flex-direction:column;align-items:stretch;}");
-        GM_addStyle("body::-webkit-scrollbar-thumb{background-color: #404040;} body::-webkit-scrollbar-track{background: rgba(255,255,255,.1);} body::-webkit-scrollbar{width: 12px;} body{scrollbar-width: thin;scrollbar-color: rgba(255,255,255,.1) #404040;} ");
+        GM_addStyle("*::-webkit-scrollbar-thumb{background-color: #404040;} *::-webkit-scrollbar-track{background: rgba(255,255,255,.1);} *::-webkit-scrollbar{width: 12px;} body{scrollbar-width: thin;scrollbar-color: rgba(255,255,255,.1) #404040;} ");
         // PiP
         GM_addStyle("#pip{display:flex;width:100%;position:relative;} #pip > div {width:50%;flex:1;} #pip > iframe{width:100%;flex:1;}");
         // option list
