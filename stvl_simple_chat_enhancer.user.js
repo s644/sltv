@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.83
+// @version      1.90
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -29,6 +29,7 @@
         showTwitMsg: true,
         showVoteMsg: true,
         showReplayMsg: true,
+        showBlacklistMsg: true,
         shortenLink: true,
         notifySound: false,
         notifyHandleSound: false,
@@ -52,6 +53,9 @@
         notifyAfterUpdate: true,
         notifyOnCutStream: true,
         oldVersion: 0.00,
+        userBlacklist: [],
+        userBlacklistTw: [],
+        userBlacklistYt: [],
     };
 
     // temp values
@@ -147,9 +151,9 @@
 
 
         // option container
-        var specialNicks = ["fa,fa-youtube","fa,fa-twitch","fa,fa-robot","fas,fa-pray","fas,fa-poll-h","fas,fa-play-circle"];
-        var specialClass = ["ytMsg","twitMsg","botMsg","guestMsg","voteMsg","replayMsg"];
-        var specialNames = ["Youtube","Twitch","Bot","Gast", "Voting","Replay"];
+        var specialNicks = ["fa,fa-youtube","fa,fa-twitch","fa,fa-robot","fas,fa-pray","fas,fa-poll-h","fas,fa-play-circle","fas,fa-users-slash"];
+        var specialClass = ["ytMsg","twitMsg","botMsg","guestMsg","voteMsg","replayMsg","blacklistMsg"];
+        var specialNames = ["Youtube","Twitch","Bot","Gast", "Voting","Replay","Blacklist"];
 
         var optionDiv = createElement('div');
         optionDiv.id = "optionList";
@@ -279,13 +283,22 @@
                         var nickColor = nickNode.style.color;
                         var specialNick = "";
                         var botType = "";
+                        var blacklist = false;
 
                         // detect youtube, twitch, bot
                         if(nickNode.getElementsByClassName("fa-youtube").length) {
                             msg.classList.add("ytMsg");
+                            if(getValue('userBlacklistYt').indexOf(nickNode.innerText.trim()) >= 0) {
+                                msg.classList.add("blacklistMsg");
+                                blacklist = true;
+                            }
                             specialNick = "ytMsg";
                         } else if(nickNode.getElementsByClassName("fa-twitch").length) {
                             msg.classList.add("twitMsg");
+                            if(getValue('userBlacklistTw').indexOf(nickNode.innerText.trim()) >= 0) {
+                                msg.classList.add("blacklistMsg");
+                                blacklist = true;
+                            }
                             specialNick = "twitMsg";
                         } else if(mutation.addedNodes[0].classList.contains("fa-play-circle")) {
                             msg.classList.add("replayMsg");
@@ -317,6 +330,16 @@
                             if(specialNick !== "botMsg" || getValue("filter" + botType.ucFirst())) {
                                msg.classList.add("hide");
                             }
+                        }
+
+                        // check against blacklist
+                        if(specialNick == "" && getValue('userBlacklist').indexOf(nickNode.innerText) >= 0) {
+                            msg.classList.add("blacklistMsg");
+                            blacklist = true;
+                        }
+
+                        if(blacklist && !getValue('showBlacklistMsg')) {
+                            msg.classList.add("hide");
                         }
 
                         // add click event for real users
@@ -472,7 +495,7 @@
                         chat.removeChild(chat.firstChild);
                     }
 
-                    if(d.visibilityState == "hidden" && setting.initDone && (specialNick === "" || getValue("show" + specialNick.ucFirst()) || (specialNick === "botMsg" && !getValue("filter" + botType.ucFirst())))) {
+                    if(d.visibilityState == "hidden" && setting.initDone && !blacklist && (specialNick === "" || getValue("show" + specialNick.ucFirst()) || (specialNick === "botMsg" && !getValue("filter" + botType.ucFirst())))) {
                         setting.unread++;
 
                         // play notification sound but only every 20th time in unfocused window and if priority sound hasn't been played
@@ -503,6 +526,9 @@
         miscSetting.appendChild(UiElement.toggleInput("notifyAfterUpdate", "zeige Hinweis nach einem Boost Update")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("notifyOnCutStream", "zeige Hinweis bei Erfüllung der Arbeitsaktion")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("autoReload", "Seite nach Verbindungsverlust automatisch neu laden")).appendChild(createElement("br"));
+        miscSetting.appendChild(createElement("p"),createElement("br"));
+        miscSetting.appendChild(UiElement.textareaInput("userBlacklist", "Blacklist: pro Zeile ein Benutzername, 'tw:' oder 'yt:' als Twitch oder Youtube Prefix. Bsp.: tw:muster_maxfrau <span class=\"text-danger\">*</span>")).appendChild(createElement("br"));
+        miscSetting.appendChild(UiElement.toggleInput("showBlacklistMsg", "Blacklist deaktivieren")).appendChild(createElement("br"));
         //miscSetting.appendChild(UiElement.textInput("keywords", "Bla", 6)).appendChild(createElement("br"));
         miscSetting.innerHTML += "<p class=\"margin-top-sm\"><span class=\"text-danger\">*</span>  wirkt sich erst auf neue Nachrichten, bzw. nach dem Neuladen der Seite aus</p>";
 
@@ -530,6 +556,8 @@
         d.querySelector("div#auktionscontainer").parentNode.prepend(settingContainer.render());
         d.querySelector("button#closeSettings").onclick = closeSettings;
         d.querySelector("span#authorHandle").addEventListener("click", () => {addNickHandle(GM_info.script.author)});
+
+        d.querySelector('#boostUserBlacklist').addEventListener('blur', saveBlacklist);
 
         // dirty workaround for first init
         setTimeout(function(){
@@ -830,6 +858,11 @@
         toggleMsg("replayMsg");
     }
 
+    // toggle blacklisted user message visibility
+    window.showBlacklistMsgCallback = function () {
+        toggleMsg("blacklistMsg");
+    }
+
     // toggle bot filter
     window.filterActionBotCallback = function () {toggleMsg("botMsg");}
     window.filterReleaseBotCallback = function () {toggleMsg("botMsg");}
@@ -921,6 +954,8 @@
         updateOptionUi("notifyAfterUpdate", getValue("notifyAfterUpdate"));
         updateOptionUi("notifyOnCutStream", getValue("notifyOnCutStream"));
         updateOptionUi("autoReload", getValue("autoReload"));
+        updateOptionUi("showBlacklistMsg", getValue("showBlacklistMsg"));
+        loadBlacklist();
 
         d.querySelector("li#boostMenu").classList.add("active");
         d.querySelector("div#boostSettingContainer").style.display = "block";
@@ -1008,6 +1043,49 @@
         }
     }
 
+    // convert blacklist values to readable format
+    function loadBlacklist() {
+        var blacklist = d.querySelector('#boostUserBlacklist');
+        var plain = "";
+        var lists = ['userBlacklist','userBlacklistTw','userBlacklistYt'];
+        var prefix = ['','tw:','yt:'];
+
+        for(var x = 0; x < lists.length; x++) {
+            var list = getValue(lists[x]);
+
+            for(var i = 0; i < list.length; i++) {
+                plain += prefix[x] + list[i] + "\n";
+            }
+        }
+        blacklist.value = plain;
+    }
+
+    // convert blacklist to values
+    window.saveBlacklist = function() {
+        var blacklist = d.querySelector('#boostUserBlacklist');
+        var lines = blacklist.value.split('\n');
+        var userBlacklist = [];
+        var userBlacklistYt = [];
+        var userBlacklistTw = [];
+
+        for(var i = 0; i < lines.length; i++){
+            var match = lines[i].match(/^(tw|yt):(.*)/);
+            if(match) {
+                if(match[1] == 'tw') {
+                    userBlacklistTw.push(match[2].trim());
+                } else if (match[1] == 'yt') {
+                    userBlacklistYt.push(match[2].trim());
+                }
+            } else if(lines[i].trim().length > 0) {
+                userBlacklist.push(lines[i].trim());
+            }
+        }
+
+        setValue('userBlacklist', userBlacklist);
+        setValue('userBlacklistTw', userBlacklistTw);
+        setValue('userBlacklistYt', userBlacklistYt);
+    }
+
     // page container
     class Container {
         constructor(id) {
@@ -1067,6 +1145,13 @@
             return itemInput;
         }
 
+        static createTextarea(valName) {
+            var itemInput = createElement("textarea");
+            itemInput.dataset.name = valName;
+            itemInput.id = 'boost' + valName.ucFirst();
+            return itemInput;
+        }
+
         static toggleInput(valName, label) {
             var itemInput = UiElement.createInput("checkbox", valName);
             itemInput.onchange = optionToggled;
@@ -1085,6 +1170,28 @@
             } else {
                 return itemInput;
             }
+        }
+
+        static textareaInput(valName, label) {
+            var row = createElement("div");
+            var group = createElement("div");
+            var wrapper = createElement("div");
+            row.className = "row";
+            wrapper.className = "col-lg-12";
+            group.className = "form-group";
+            var itemInput = UiElement.createTextarea(valName);
+            itemInput.className = "form-control";
+            itemInput.rows = 4;
+
+            if(label !== undefined) {
+                var labelWrapper = createElement("label");
+                labelWrapper.innerHTML = label;
+                group.appendChild(labelWrapper);
+            }
+            group.appendChild(itemInput);
+            wrapper.appendChild(group);
+            row.appendChild(wrapper);
+            return row;
         }
 
         static textInput(valName, label, size) {
