@@ -21,5 +21,6 @@ This script has the following features:
 * reload page on lost connection (e.g. server restart)
 * maximize the chatwindow
 * themed scrollbars for supported browsers
+* user blacklist
 
 developed for _https://www.tampermonkey.net/_
