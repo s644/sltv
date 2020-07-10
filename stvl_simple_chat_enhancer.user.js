@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.82
+// @version      1.83
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -393,6 +393,11 @@
                                 text = text.replace("@scriptuser","<span class=\"badge\">Scriptuser</span>");
                             }
 
+                            // brighten up replay messages
+                            if(specialNick === 'replayMsg') {
+                                wrapNode.style = "color: #fff;";
+                            }
+
                             // detect vote message ": 15"
                             if(text.length > 2 && text.length < 5 && !voteDetected) {
                                 let num = parseInt(text.replace(": ",""));
@@ -449,11 +454,6 @@
                                         }
                                     }
                                 });
-                            }
-
-                            // brighten up replay messages
-                            if(specialNick === 'replayMsg') {
-                                wrapNode.style = "color: #fff;";
                             }
 
                             // highlight my user name
