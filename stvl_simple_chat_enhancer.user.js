@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.90
+// @version      1.91
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -241,6 +241,7 @@
         userListTable.id = 'collapseUserList';
         userList.querySelectorAll('h4')[0].parentNode.style.padding = '1px 1px 1px 10px';
         userList.querySelectorAll('h4')[0].style.fontSize = '14px';
+        userList.querySelectorAll('h4')[0].style.lineHeight = '.9';
         userList.style.minHeight = '40px';
 
         // dirty startup hack
