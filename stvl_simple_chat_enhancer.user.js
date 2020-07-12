@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      1.91
+// @version      2.00
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -56,6 +56,7 @@
         userBlacklist: [],
         userBlacklistTw: [],
         userBlacklistYt: [],
+        chatWidth: 'col-md-3',
     };
 
     // temp values
@@ -527,9 +528,20 @@
         miscSetting.appendChild(UiElement.toggleInput("notifyAfterUpdate", "zeige Hinweis nach einem Boost Update")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("notifyOnCutStream", "zeige Hinweis bei Erfüllung der Arbeitsaktion")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("autoReload", "Seite nach Verbindungsverlust automatisch neu laden")).appendChild(createElement("br"));
-        miscSetting.appendChild(createElement("p"),createElement("br"));
+        miscSetting.appendChild(createElement("p"));
         miscSetting.appendChild(UiElement.textareaInput("userBlacklist", "Blacklist: pro Zeile ein Benutzername, 'tw:' oder 'yt:' als Twitch oder Youtube Prefix. Bsp.: tw:muster_maxfrau <span class=\"text-danger\">*</span>")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("showBlacklistMsg", "Blacklist deaktivieren")).appendChild(createElement("br"));
+        miscSetting.appendChild(createElement("p"));
+        miscSetting.appendChild(
+            UiElement.selectInput(
+                "chatWidth",
+                "Chat Breite",
+                ['col-md-1','col-md-2','col-md-3','col-md-4','col-md-5','col-md-6','col-md-7','col-md-8','col-md-9','col-md-10','col-md-11','col-md-12'],
+                ['8,3%','16,6%','25%','33,3','41,6%','50%','58,3%','66,6%','75%','83,3%','91,6%','100%']
+            ),
+            createElement("br")
+        );
+
         //miscSetting.appendChild(UiElement.textInput("keywords", "Bla", 6)).appendChild(createElement("br"));
         miscSetting.innerHTML += "<p class=\"margin-top-sm\"><span class=\"text-danger\">*</span>  wirkt sich erst auf neue Nachrichten, bzw. nach dem Neuladen der Seite aus</p>";
 
@@ -559,6 +571,10 @@
         d.querySelector("span#authorHandle").addEventListener("click", () => {addNickHandle(GM_info.script.author)});
 
         d.querySelector('#boostUserBlacklist').addEventListener('blur', saveBlacklist);
+
+        // chat width settings
+        d.querySelector('#boostChatWidth').addEventListener('change', saveChatWidth);
+        loadChatWidth();
 
         // dirty workaround for first init
         setTimeout(function(){
@@ -930,6 +946,7 @@
 
     // show setting page
     window.showSettingsCallback = function () {
+        d.querySelector('#rechtespalte').style.display = 'none';
         var pageNodes = d.getElementsByClassName("hauptcontainer");
         for(let i = 0; i < pageNodes.length; i++) {
             if(pageNodes[i].style.display == "block") {
@@ -1003,6 +1020,7 @@
         d.querySelector("div#boostSettingContainer").style.display = "none";
         setting.lastContainer.style.display = "block";
         d.querySelectorAll("#header ul.nav>li>a." + setting.lastContainer.id.replace("container","link"))[0].parentElement.classList.add("active");
+        d.querySelector('#rechtespalte').style.display = null;
     }
 
     // option clicked callback
@@ -1061,6 +1079,43 @@
         blacklist.value = plain;
     }
 
+    // load modified chat width
+    function loadChatWidth() {
+        var select = d.querySelector('#boostChatWidth');
+        var sidebar = d.querySelector('#rechtespalte');
+        var container = sidebar.parentNode.querySelectorAll(':scope > div:not(#rechtespalte):not(#boostSettingContainer)');
+        var size = 1;
+        for(size; size <= 12; size++) {
+            if(sidebar.classList.contains('col-md-' + size.toString())) {
+
+                sidebar.classList.remove('col-md-' + size.toString());
+                sidebar.classList.add(getValue('chatWidth'));
+
+                var invertedSize = 12 - size;
+                var mainWidth = getValue('chatWidth').match(/col\-md\-([0-9]{1,2})/);
+                var invertedSettingSize = 12 - parseInt(mainWidth[1]);
+                for(var c = 0; c < container.length; c++) {
+                    container[c].classList.remove('col-md-' + invertedSize.toString(),'hide');
+                    if(invertedSettingSize > 0) {
+                        container[c].classList.add('col-md-' + invertedSettingSize.toString());
+                    } else {
+                        container[c].classList.add('hide');
+                    }
+                }
+
+                break;
+            }
+        }
+        select.value = getValue('chatWidth');
+    }
+
+    // save modified chat width
+    window.saveChatWidth = function() {
+        var select = d.querySelector('#boostChatWidth');
+        setValue('chatWidth', select.value);
+        loadChatWidth();
+    }
+
     // convert blacklist to values
     window.saveBlacklist = function() {
         var blacklist = d.querySelector('#boostUserBlacklist');
@@ -1092,7 +1147,7 @@
         constructor(id) {
             this.container = createElement("div");
             this.container.id = id;
-            this.container.classList.add("col-md-9","hauptcontainer");
+            this.container.classList.add("col-md-12","hauptcontainer");
             this.tabLinks = createElement("ul");
             this.tabLinks.classList.add("nav","nav-tabs");
             this.tabContent = createElement("div");
@@ -1153,6 +1208,21 @@
             return itemInput;
         }
 
+        static createSelect(valName, vals, valsNames) {
+            var itemInput = createElement("select");
+            itemInput.dataset.name = valName;
+            itemInput.id = 'boost' + valName.ucFirst();
+
+            for(var i = 0; i < vals.length; i++) {
+                var option = createElement("option");
+                option.value = vals[i];
+                option.innerHTML = valsNames[i] ? valsNames[i] : vals[i];
+                itemInput.appendChild(option);
+            }
+
+            return itemInput;
+        }
+
         static toggleInput(valName, label) {
             var itemInput = UiElement.createInput("checkbox", valName);
             itemInput.onchange = optionToggled;
@@ -1171,6 +1241,28 @@
             } else {
                 return itemInput;
             }
+        }
+
+        static selectInput(valName, label, vals, valsNames) {
+            var row = createElement("div");
+            var group = createElement("div");
+            var wrapper = createElement("div");
+            row.className = "row";
+            wrapper.className = "col-lg-6";
+            group.className = "form-group";
+            var itemInput = UiElement.createSelect(valName, vals, valsNames);
+            itemInput.className = "form-control";
+
+            if(label !== undefined) {
+                var labelWrapper = createElement("label");
+                labelWrapper.innerHTML = label;
+                group.appendChild(labelWrapper);
+            }
+
+            group.appendChild(itemInput);
+            wrapper.appendChild(group);
+            row.appendChild(wrapper);
+            return row;
         }
 
         static textareaInput(valName, label) {
