@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      2.00
+// @version      2.01
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -537,7 +537,7 @@
                 "chatWidth",
                 "Chat Breite",
                 ['col-md-1','col-md-2','col-md-3','col-md-4','col-md-5','col-md-6','col-md-7','col-md-8','col-md-9','col-md-10','col-md-11','col-md-12'],
-                ['8,3%','16,6%','25%','33,3','41,6%','50%','58,3%','66,6%','75%','83,3%','91,6%','100%']
+                ['8,3%','16,6%','25%','33,3%','41,6%','50%','58,3%','66,6%','75%','83,3%','91,6%','100%']
             ),
             createElement("br")
         );
