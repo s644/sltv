@@ -19,7 +19,8 @@ This script has the following features:
 * add favicon to tab
 * hide voting messages (hides messages containing only numbers between 1 - 20)
 * reload page on lost connection (e.g. server restart)
-* maximize the chatwindow
+* maximize the chat window
+* control chat width
 * themed scrollbars for supported browsers
 * user blacklist
 
