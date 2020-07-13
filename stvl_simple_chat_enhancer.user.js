@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      2.01
+// @version      2.02
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -537,7 +537,7 @@
                 "chatWidth",
                 "Chat Breite",
                 ['col-md-1','col-md-2','col-md-3','col-md-4','col-md-5','col-md-6','col-md-7','col-md-8','col-md-9','col-md-10','col-md-11','col-md-12'],
-                ['8,3%','16,6%','25%','33,3%','41,6%','50%','58,3%','66,6%','75%','83,3%','91,6%','100%']
+                ['8,3%','16,6%','25%','33,3','41,6%','50%','58,3%','66,6%','75%','83,3%','91,6%','100%']
             ),
             createElement("br")
         );
@@ -613,7 +613,7 @@
         GM_addStyle(".hand{cursor:pointer;} .hide{display:none;} span.badgeLight{font-weight:normal; background-color:#44444491;}a.disabled {color:gray;pointer-events: none;} .margin-top-sm { margin-top: .5em; } div.serverBot{color:#009933;} .msgHighlight{ background-color: rgba(255,255,255,.09);} .boostFlex{display:flex;flex-direction:column;align-items:stretch;}");
         GM_addStyle("*::-webkit-scrollbar-thumb{background-color: #606060;} *::-webkit-scrollbar-track{background: #404040;} *::-webkit-scrollbar{width: 12px;} body{scrollbar-width: thin;scrollbar-color: rgba(255,255,255,.1) #404040;} ");
         // PiP
-        GM_addStyle("#pip{display:flex;width:100%;position:relative;} #pip > div {width:50%;flex:1;} #pip > iframe{width:100%;flex:1;}");
+        GM_addStyle("#pip{height:400px;position:relative;} #pip > div{position:absolute;} #pip > div:nth-of-type(2) {width:20%;bottom:calc(20% + 35px);right: calc(20% + 18px);height: 20%;position: absolute;}");
         // option list
         GM_addStyle("#optionList{padding:0 10px;} #optionList > i{;margin:0 2px 0 2px;}");
         // userlist
@@ -633,7 +633,11 @@
 
         d.getElementById("premiumbereich").insertBefore(pip, d.getElementById("premiumbereich").getElementsByTagName("section")[0]);
         pip.appendChild(d.getElementById("videocontainer"));
-        pip.appendChild(vidFrame);
+        //d.querySelectorAll("#twitch-embed iframe")[0].removeAttribute("height");
+        //d.querySelectorAll("#twitch-embed iframe")[0].removeAttribute("width");
+        //pip.appendChild(d.getElementById("twitch-embed"));
+
+        //pip.appendChild(vidFrame);
     }
 
     // play notification sound
@@ -906,7 +910,6 @@
         } else {
             buttonBar.classList.add("hide");
         }
-        chat.style.height = (parseInt(chat.style.height) - parseInt(getValue("displayButtonbar")?parseInt(buttonBar.offsetHeight)+5:-27)).toString() + "px";
         chat.scrollTop = chat.scrollHeight;
     }
 
