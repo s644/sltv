@@ -218,10 +218,10 @@
         optionDiv.appendChild(icon);
 
         // pip function
-        menu.addItem("Bild in Bild","pipId");
+        /*menu.addItem("Bild in Bild","pipId");
         icon = createOptionIcon(["fas","fa-video"],"Zweite Perspektive (Youtube) einbinden (PiP)");
         icon.dataset.name = "pipId";
-        optionDiv.appendChild(icon);
+        optionDiv.appendChild(icon);*/
 
         menu.addDivider();
         var settingLink = menu.addItem("Einstellungen", "showSettings",).getElementsByTagName("a")[0];
