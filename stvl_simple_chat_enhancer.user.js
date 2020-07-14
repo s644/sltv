@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      2.02
+// @version      2.04
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -537,7 +537,7 @@
                 "chatWidth",
                 "Chat Breite",
                 ['col-md-1','col-md-2','col-md-3','col-md-4','col-md-5','col-md-6','col-md-7','col-md-8','col-md-9','col-md-10','col-md-11','col-md-12'],
-                ['8,3%','16,6%','25%','33,3%','41,6%','50%','58,3%','66,6%','75%','83,3%','91,6%','100%']
+                ['8,3%','16,6%','25%','33,3','41,6%','50%','58,3%','66,6%','75%','83,3%','91,6%','100%']
             ),
             createElement("br")
         );
@@ -618,6 +618,8 @@
         GM_addStyle("#optionList{padding:0 10px;} #optionList > i{;margin:0 2px 0 2px;}");
         // userlist
         GM_addStyle("#userlistcontainer.boostList table > tbody > tr > td {padding:2px;}");
+        // stvl css fix
+        GM_addStyle("body{margin-top:0px !important; overflow:hidden;} #header{margin-top: -20px;}");
     }
 
     // add pip container
@@ -631,8 +633,8 @@
         vidFrame.classList.add("hide");
         pip.id = "pip";
 
-        d.getElementById("premiumbereich").insertBefore(pip, d.getElementById("premiumbereich").getElementsByTagName("section")[0]);
-        pip.appendChild(d.getElementById("videocontainer"));
+        //d.getElementById("premiumbereich").insertBefore(pip, d.getElementById("premiumbereich").getElementsByTagName("section")[0]);
+        //pip.appendChild(d.getElementById("videocontainer"));
         //d.querySelectorAll("#twitch-embed iframe")[0].removeAttribute("height");
         //d.querySelectorAll("#twitch-embed iframe")[0].removeAttribute("width");
         //pip.appendChild(d.getElementById("twitch-embed"));
