@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      2.07
+// @version      2.08
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -274,6 +274,7 @@
                 // only process messages
                 if(mutation.removedNodes.length === 0 && (mutation.addedNodes.length >= 5 || (mutation.addedNodes.length == 1 && mutation.addedNodes[0].classList.contains("premium_signup")))) {
                     let notificationDone = false;
+                    var specialNick = "";
                     setting.socketOpen = true;
 
                     // create our own message container
@@ -282,8 +283,7 @@
                     if(mutation.addedNodes.length >= 5) {
                         // parse nick
                         var nickNode = mutation.addedNodes[2];
-                        var nickColor = nickNode.style.color;
-                        var specialNick = "";
+                        var nickColor = nickNode.style.color;                        
                         var botType = "";
                         var blacklist = false;
 
