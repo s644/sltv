@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      2.08
+// @version      2.09
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -497,7 +497,7 @@
                         chat.removeChild(chat.firstChild);
                     }
 
-                    if(d.visibilityState == "hidden" && setting.initDone && !blacklist && (specialNick === "" || getValue("show" + specialNick.ucFirst()) || (specialNick === "botMsg" && !getValue("filter" + botType.ucFirst())))) {
+                    if(d.visibilityState == "hidden" && setting.msgsLoaded && setting.initDone && !blacklist && (specialNick === "" || getValue("show" + specialNick.ucFirst()) || (specialNick === "botMsg" && !getValue("filter" + botType.ucFirst())))) {
                         setting.unread++;
 
                         // play notification sound but only every 20th time in unfocused window and if priority sound hasn't been played
@@ -1449,6 +1449,10 @@
         } else {
             setting.reloadPending = false;
             setting.msgsLoaded = true;
+            setting.unreadPriority = 0;
+            setting.unread = 0;
+            d.title = setting.origTitle;
+            GM_log('Short timeout, canceled reload.');
         }
     });
 
