@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      2.09
+// @version      2.10
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -1428,18 +1428,16 @@
             setting.msgsLoaded = false;
             if(setting.socketOpen && !setting.closePending && getValue('autoReload')) {
                 GM_log('Socket disconnection detected...');
-                var countdown;
-                if(!d.querySelector('#boostCountdown')) {
+                var countdown = d.querySelector('#boostCountdown');
+                if(!countdown) {
                     countdown = createElement("span");
                     countdown.id = 'boostCountdown';
 
-                    var countdownAlert = createElement("h1");
+                    var countdownAlert = createElement("h2");
                     countdownAlert.appendChild(d.createTextNode("BOOST lädt in "));
                     countdownAlert.appendChild(countdown);
                     countdownAlert.appendChild(d.createTextNode(" Sekunden den Live Bereich neu!"));
                     d.getElementById('verbinder').querySelectorAll('.inhalt')[0].appendChild(countdownAlert);
-                } else {
-                    countdown = d.querySelector('#boostCountdown');
                 }
 
                 countdown.innerHTML = '5';
