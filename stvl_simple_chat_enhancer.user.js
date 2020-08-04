@@ -620,7 +620,7 @@
         GM_addStyle("#userlistcontainer.boostList table > tbody > tr > td {padding:2px;}");
         
         // stvl css fix
-        GM_addStyle("body{margin-top:0px !important; overflow:hidden;} #header{margin-top:-20px;}");
+        GM_addStyle("@media (min-width: 992px) { body{margin-top:0px !important; overflow:hidden;} #header{margin-top:-20px;} }");
     }
 
     // add pip container
