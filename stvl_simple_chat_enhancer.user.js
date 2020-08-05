@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      2.13
+// @version      2.14
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -621,6 +621,7 @@
         
         // stvl css fix
         GM_addStyle("@media (min-width: 992px) { body{margin-top:0px !important; overflow:hidden;} #header{margin-top:-20px;} }");
+        GM_addStyle("@media (max-width: 992px) { #chatinhalt {max-height:600px !important} }");
     }
 
     // add pip container
