@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      2.17
+// @version      2.18
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -287,6 +287,9 @@
                         var nickColor = nickNode.style.color;                        
                         var botType = "";
                         var blacklist = false;
+                        
+                        // prevent strange character overflow
+                        msg.style.overflowY = 'hidden';
 
                         // detect youtube, twitch, bot
                         if(nickNode.getElementsByClassName("fa-youtube").length) {
