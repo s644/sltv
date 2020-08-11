@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      2.15
+// @version      2.16
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -56,6 +56,7 @@
         userBlacklist: [],
         userBlacklistTw: [],
         userBlacklistYt: [],
+        keywordList: [],
         chatWidth: 'col-md-3',
     };
 
@@ -208,14 +209,14 @@
         updateOptionUi("notifyHandleSound", getValue("notifyHandleSound"));
 
         menu.addDivider();
-        optionDiv.appendChild(d.createTextNode(" | "));
+        //optionDiv.appendChild(d.createTextNode(" | "));
 
         // personal search strings
-        setting.keywords = getValue("searchString").split(",");
+        /*setting.keywords = getValue("searchString").split(",");
         menu.addItem("Schlüsselwörter","searchString");
         icon = createOptionIcon(["fas","fa-search","hide"],"Definiere eigene Schlüsselwörter");
         icon.dataset.name = "searchString";
-        optionDiv.appendChild(icon);
+        optionDiv.appendChild(icon);*/
 
         // pip function
         /*menu.addItem("Bild in Bild","pipId");
@@ -223,7 +224,7 @@
         icon.dataset.name = "pipId";
         optionDiv.appendChild(icon);*/
 
-        menu.addDivider();
+        //menu.addDivider();
         var settingLink = menu.addItem("Einstellungen", "showSettings",).getElementsByTagName("a")[0];
         settingLink.href = "#";
 
@@ -275,7 +276,7 @@
                 if(mutation.removedNodes.length === 0 && (mutation.addedNodes.length >= 5 || (mutation.addedNodes.length == 1 && mutation.addedNodes[0].classList.contains("premium_signup")))) {
                     let notificationDone = false;
                     var specialNick = "";
-                    setting.socketOpen = true;
+                    setting.socketOpen = true;                    
 
                     // create our own message container
                     var msg = createElement('div');
@@ -464,22 +465,23 @@
                             });
 
                             // search for keywords
-                            if(setting.keywords[0] !== "") {
-                                setting.keywords.forEach(function(key){
-                                    var keyReg = new RegExp('\\b' + key + '(?!\\<)\\b','g');
-                                    if(keyReg.test(text)) {
-                                        setting.unreadPriority++;
-                                        text = text.replace(keyReg,'<span class="badge">' + key + '</span>');
+                            var keywords = getValue('keywordList');
+                            //if(keywords.length > 0) {
+                            keywords.forEach(function(key){
+                                var keyReg = new RegExp('\\b' + key + '(?!\\<)\\b','g');
+                                if(keyReg.test(text)) {
+                                    setting.unreadPriority++;
+                                    text = text.replace(keyReg,'<span class="badge">' + key + '</span>');
 
-                                        // play notification sound but only every 10th time in unfocused window
-                                        if(getValue("notifyHandleSound") && setting.unreadPriority % 10 === 1 && !notificationDone && setting.initDone) {
-                                            notify(notifyPriority);
-                                            // only notify once, if priority and normal notification is activated
-                                            notificationDone = true;
-                                        }
+                                    // play notification sound but only every 10th time in unfocused window
+                                    if(getValue("notifyHandleSound") && setting.unreadPriority % 10 === 1 && !notificationDone && setting.initDone) {
+                                        notify(notifyPriority);
+                                        // only notify once, if priority and normal notification is activated
+                                        notificationDone = true;
                                     }
-                                });
-                            }
+                                }
+                            });
+
 
                             // highlight my user name
                             wrapNode.innerHTML = text;
@@ -520,7 +522,7 @@
         settingContainer.prependHTML('<h1>Boost Einstellungen</h1>');
         var botSetting = settingContainer.addPage("bots","Bots");
         var miscSetting = settingContainer.addPage("misc","Sonstiges");
-        var aboutSetting = settingContainer.addPage("about","Über");        
+        var aboutSetting = settingContainer.addPage("about","Über");
         miscSetting.appendChild(UiElement.toggleInput("brightenUp", "schlecht lesbare Nicknamen aufhellen<span class=\"text-danger\">*</span>")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("enableMarkup", "Markup aktivieren<span class=\"text-danger\">*</span> (*<b>fett</b>*,_<i>kursiv</i>_,~<strike>durchgestrichen</strike>~)")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("highlightUserMsg", "alle Nachrichten eines Benutzers bei überfahren mit Zeiger hervorheben")).appendChild(createElement("br"));
@@ -528,6 +530,8 @@
         miscSetting.appendChild(UiElement.toggleInput("notifyAfterUpdate", "zeige Hinweis nach einem Boost Update")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("notifyOnCutStream", "zeige Hinweis bei Erfüllung der Arbeitsaktion")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("autoReload", "Seite nach Verbindungsverlust automatisch neu laden")).appendChild(createElement("br"));
+        miscSetting.appendChild(createElement("p"));
+        miscSetting.appendChild(UiElement.textareaInput("keywordList", "Schlüsselwörter, die in Nachrichten hervorgehoben werden sollen: pro Zeile ein Suchbegriff, Bsp.: @deintwitchname <span class=\"text-danger\">*</span>")).appendChild(createElement("br"));
         miscSetting.appendChild(createElement("p"));
         miscSetting.appendChild(UiElement.textareaInput("userBlacklist", "Blacklist: pro Zeile ein Benutzername, 'tw:' oder 'yt:' als Twitch oder Youtube Prefix. Bsp.: tw:muster_maxfrau <span class=\"text-danger\">*</span>")).appendChild(createElement("br"));
         miscSetting.appendChild(UiElement.toggleInput("showBlacklistMsg", "Blacklist deaktivieren")).appendChild(createElement("br"));
@@ -571,6 +575,7 @@
         d.querySelector("span#authorHandle").addEventListener("click", () => {addNickHandle(GM_info.script.author)});
 
         d.querySelector('#boostUserBlacklist').addEventListener('blur', saveBlacklist);
+        d.querySelector('#boostKeywordList').addEventListener('blur', saveKeywordList);
 
         // chat width settings
         d.querySelector('#boostChatWidth').addEventListener('change', saveChatWidth);
@@ -580,7 +585,6 @@
         setTimeout(function(){
             //setting.initDone = true;
             if(getValue("oldVersion") < parseFloat(GM_info.script.version)) {
-                setValue("oldVersion", parseFloat(GM_info.script.version));
                 if(getValue("notifyAfterUpdate")) {
                     GM_notification({
                         text:       "Boost wurde auf Version " +GM_info.script.version.toString() + " aktualisiert.\n\nHier klicken für Neuerungen",
@@ -593,6 +597,15 @@
                         }
                     });
                 }
+                
+                // search string migration                
+                if(getValue('oldVersion') < 2.16 && getValue('searchString') !== null && getValue('searchString').length > 0) {
+                    setValue('keywordList', getValue('searchString').split(","));
+                    alert('BOOST: Ab sofort findest du deine Schlüsselwörter unter "Boost -> Einstellungen -> Sonstiges". Deine bisheringen Schlüsselwörter wurden erfolgreich in das neue System migirert.');
+                    setValue('searchString', null);
+                }
+
+                setValue("oldVersion", parseFloat(GM_info.script.version));                
             }
         }, 500);
     }
@@ -618,11 +631,10 @@
         GM_addStyle("#optionList{padding:0 10px;} #optionList > i{;margin:0 2px 0 2px;}");
         // userlist
         GM_addStyle("#userlistcontainer.boostList table > tbody > tr > td {padding:2px;}");
-        
         // stvl css fix
         GM_addStyle("@media (min-width: 992px) { body{margin-top:0px !important; overflow:hidden;} #header{margin-top:-20px;} }");
         GM_addStyle("@media (max-width: 992px) { #chatinhalt {max-height:600px !important} }");
-        // balance page styling
+        // account styling
         GM_addStyle('#kontoauszug{position:relative;top:10px;clear:both}#kontoauszug>thead>tr>th:last-child{text-align:right}#kontoauszugEinzahlenBtn{float:left;margin-right:15px}#kontoauszug_length{float:left}#kontoauszug_length select{height:36px;margin-right:5px}#kontoauszug_filter{float:right}#kontoauszug_filter input{margin-left:5px;height:36px;font-weight:normal;padding:8px 12px;font-size:15px;line-height:1.42857143;color:#999;background-color:#3e3e3e;background-image:none;border:1px solid #555;border-radius:0;-webkit-transition:border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;-o-transition:border-color ease-in-out .15s,box-shadow ease-in-out .15s;transition:border-color ease-in-out .15s,box-shadow ease-in-out .15s}#kontoauszug_info{float:left}#kontoauszug_paginate{float:right}#kontoauszug_paginate>a,#kontoauszug_paginate>span>a,#kontoauszug_paginate>span>span{position:relative;float:left;padding:6px 12px;margin-left:-1px;line-height:1.42857143;text-decoration:none;border:1px solid #555}#kontoauszug_paginate>a,#kontoauszug_paginate>span>a{cursor:pointer}');
     }
 
@@ -974,6 +986,7 @@
         });
 
         // load misc setting values
+        updateOptionUi("superIncognito", getValue("superIncognito"));
         updateOptionUi("brightenUp", getValue("brightenUp"));
         updateOptionUi("enableMarkup", getValue("enableMarkup"));
         updateOptionUi("smallUserlist", getValue("smallUserlist"));
@@ -983,6 +996,7 @@
         updateOptionUi("autoReload", getValue("autoReload"));
         updateOptionUi("showBlacklistMsg", getValue("showBlacklistMsg"));
         loadBlacklist();
+        loadKeywordList();
 
         d.querySelector("li#boostMenu").classList.add("active");
         d.querySelector("div#boostSettingContainer").style.display = "block";
@@ -1066,7 +1080,7 @@
                 node.dispatchEvent(new Event('change'));
                 node.onchange = optionToggled;
             } else if(node.nodeName === "I") {
-                node.style.color = value?'#0fb492' : '#e64141';            
+                node.style.color = value?'#0fb492' : '#e64141';
             }
         }
     }
@@ -1086,6 +1100,19 @@
             }
         }
         blacklist.value = plain;
+    }
+
+    // convert keword listvalues to readable format
+    function loadKeywordList() {
+        var keywordlist = d.querySelector('#boostKeywordList');
+        var plain = "";
+        var list = getValue('keywordList');
+
+        for(var i = 0; i < list.length; i++) {
+            plain += list[i] + "\n";
+        }
+
+        keywordlist.value = plain;
     }
 
     // load modified chat width
@@ -1123,6 +1150,21 @@
         var select = d.querySelector('#boostChatWidth');
         setValue('chatWidth', select.value);
         loadChatWidth();
+    }
+
+    // convert keywords to values
+    window.saveKeywordList = function() {
+        var keywordlist = d.querySelector('#boostKeywordList');
+        var lines = keywordlist.value.split('\n');
+        var keywordList = [];
+
+        for(var i = 0; i < lines.length; i++){
+            if(lines[i].trim().length > 0) {
+                keywordList.push(lines[i].trim());
+            }
+        }
+
+        setValue('keywordList', keywordList);
     }
 
     // convert blacklist to values
