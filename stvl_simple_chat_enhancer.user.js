@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      2.16
+// @version      2.17
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -635,7 +635,7 @@
         GM_addStyle("@media (min-width: 992px) { body{margin-top:0px !important; overflow:hidden;} #header{margin-top:-20px;} }");
         GM_addStyle("@media (max-width: 992px) { #chatinhalt {max-height:600px !important} }");
         // account styling
-        GM_addStyle('#kontoauszug{position:relative;top:10px;clear:both}#kontoauszug>thead>tr>th:last-child{text-align:right}#kontoauszugEinzahlenBtn{float:left;margin-right:15px}#kontoauszug_length{float:left}#kontoauszug_length select{height:36px;margin-right:5px}#kontoauszug_filter{float:right}#kontoauszug_filter input{margin-left:5px;height:36px;font-weight:normal;padding:8px 12px;font-size:15px;line-height:1.42857143;color:#999;background-color:#3e3e3e;background-image:none;border:1px solid #555;border-radius:0;-webkit-transition:border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;-o-transition:border-color ease-in-out .15s,box-shadow ease-in-out .15s;transition:border-color ease-in-out .15s,box-shadow ease-in-out .15s}#kontoauszug_info{float:left}#kontoauszug_paginate{float:right}#kontoauszug_paginate>a,#kontoauszug_paginate>span>a,#kontoauszug_paginate>span>span{position:relative;float:left;padding:6px 12px;margin-left:-1px;line-height:1.42857143;text-decoration:none;border:1px solid #555}#kontoauszug_paginate>a,#kontoauszug_paginate>span>a{cursor:pointer}');
+        //GM_addStyle('#kontoauszug{position:relative;top:10px;clear:both}#kontoauszug>thead>tr>th:last-child{text-align:right}#kontoauszugEinzahlenBtn{float:left;margin-right:15px}#kontoauszug_length{float:left}#kontoauszug_length select{height:36px;margin-right:5px}#kontoauszug_filter{float:right}#kontoauszug_filter input{margin-left:5px;height:36px;font-weight:normal;padding:8px 12px;font-size:15px;line-height:1.42857143;color:#999;background-color:#3e3e3e;background-image:none;border:1px solid #555;border-radius:0;-webkit-transition:border-color ease-in-out .15s,-webkit-box-shadow ease-in-out .15s;-o-transition:border-color ease-in-out .15s,box-shadow ease-in-out .15s;transition:border-color ease-in-out .15s,box-shadow ease-in-out .15s}#kontoauszug_info{float:left}#kontoauszug_paginate{float:right}#kontoauszug_paginate>a,#kontoauszug_paginate>span>a,#kontoauszug_paginate>span>span{position:relative;float:left;padding:6px 12px;margin-left:-1px;line-height:1.42857143;text-decoration:none;border:1px solid #555}#kontoauszug_paginate>a,#kontoauszug_paginate>span>a{cursor:pointer}');
     }
 
     // add pip container
