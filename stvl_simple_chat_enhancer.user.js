@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      2.19
+// @version      2.20
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -780,6 +780,8 @@
             setting.unread = 0;
             setting.unreadPriority = 0;
             d.title = setting.origTitle;
+        } else {
+            setting.unreadPriority = 0;
         }
     }
 
