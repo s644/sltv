@@ -20,6 +20,7 @@ This script has the following features:
 * hide voting messages (hides messages containing only numbers between 1 - 20)
 * reload page on lost connection (e.g. server restart)
 * maximize the chat window
+* customize chat font size
 * control chat width
 * themed scrollbars for supported browsers
 * user blacklist
