@@ -1,6 +1,6 @@
 # Boost for Skylinetv.live
 
-Most features are only for __registrated__ users. 
+Most features are only for __registrated__ users. Create a free account at: https://skylinetv.live/mein-konto/
 
 # [>> Click to install <<](https://github.com/s644/sltv/raw/master/stvl_simple_chat_enhancer.user.js)
 
