@@ -1,5 +1,7 @@
 # Boost for Skylinetv.live
 
+Most features are only for __registrated__ users. 
+
 # [>> Click to install <<](https://github.com/s644/sltv/raw/master/stvl_simple_chat_enhancer.user.js)
 
 This script has the following features:
