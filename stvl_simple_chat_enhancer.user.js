@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      2.25
+// @version      2.26
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -163,7 +163,7 @@
         if (!getValue("displayButtonbar")) {
             optionDiv.classList.add("hide");
         }
-        optionDiv.style.marginTop = "-15px";
+        optionDiv.style.marginTop = "-10px";
         optionDiv.classList.add("panel","panel-default");
         chat.parentNode.insertBefore(optionDiv,chat);
 
