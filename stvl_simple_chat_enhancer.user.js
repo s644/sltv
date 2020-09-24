@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         [Skylinetv.live] Boost
 // @namespace    https://github.com/s644/sltv
-// @version      2.27
+// @version      3.1
 // @description  Simple chat enhancement with @userhandle support, the ability to click on usernames for easy address and clickable urls. Full feature list https://github.com/s644/sltv/blob/master/README.md
 // @author       Arno_Nuehm
 // @match        https://skylinetv.live/dabei/*
@@ -272,246 +272,247 @@
             var highlightUserMsg = getValue("highlightUserMsg");
 
             mutations.forEach(function(mutation) {
+                if(mutation.removedNodes.length === 0) {
+                    var msgNode = mutation.addedNodes[0];
 
-                // only process messages
-                if(mutation.removedNodes.length === 0 && (mutation.addedNodes.length >= 5 || (mutation.addedNodes.length == 1 && mutation.addedNodes[0].classList.contains("premium_signup")))) {
-                    let notificationDone = false;
-                    var specialNick = "";
-                    setting.socketOpen = true;                    
+                    // only process messages
+                    if(!msgNode.classList.contains('processed') && !msgNode.classList.contains('premium_signup')) {
 
-                    // create our own message container
-                    var msg = createElement('div');
+                        let notificationDone = false;
+                        var specialNick = "";
+                        setting.socketOpen = true;
 
-                    if(mutation.addedNodes.length >= 5) {
-                        // parse nick
-                        var nickNode = mutation.addedNodes[2];
-                        var nickColor = nickNode.style.color;                        
-                        var botType = "";
-                        var blacklist = false;
+                        // create our own message container
+                        var msg = createElement('div');
+                        msg.classList.add('processed');
+                        msg.id = msgNode.id;
 
-                        // prevent strange character overflow
-                        msg.style.overflowY = 'hidden';
+                        if(msgNode.childNodes.length >= 5) {
+                            // parse nick
+                            var nickNode = msgNode.childNodes[2];
+                            var nickColor = nickNode.style.color;
+                            var botType = "";
+                            var blacklist = false;
 
-                        // detect youtube, twitch, bot
-                        if(nickNode.getElementsByClassName("fa-youtube").length) {
-                            msg.classList.add("ytMsg");
-                            if(getValue('userBlacklistYt').indexOf(nickNode.innerText.trim()) >= 0) {
-                                msg.classList.add("blacklistMsg");
-                                blacklist = true;
-                            }
-                            specialNick = "ytMsg";
-                        } else if(nickNode.getElementsByClassName("fa-twitch").length) {
-                            msg.classList.add("twitMsg");
-                            if(getValue('userBlacklistTw').indexOf(nickNode.innerText.trim()) >= 0) {
-                                msg.classList.add("blacklistMsg");
-                                blacklist = true;
-                            }
-                            specialNick = "twitMsg";
-                        } else if(mutation.addedNodes[0].classList.contains("fa-play-circle")) {
-                            msg.classList.add("replayMsg");
-                            specialNick = "replayMsg";
-                        } else if(nickNode.getElementsByClassName("fa-robot").length) {
-                            if(nickNode.innerText.match(/([^\s]*)\-B(?:\u00f6|o)t/)) {
-                                switch(nickNode.innerText.match(/([^\s]*)\-B(?:\u00f6|o)t/)[1]) {
-                                    case "Finanz": botType = "financeBot"; break;
-                                    case "Aktions": botType = "actionBot"; break;
-                                    case "Veröffentlichungs": botType = "releaseBot"; break;
-                                    case "Musik": botType = "musicBot"; break;
-                                    case "Server": botType = "serverBot"; break;
-                                    case "Discord": botType = "discordBot"; break;
-                                    case "Hilfs": botType = "helperBot"; break;
-                                    case "Sieges": botType = "winnerBot"; break;
-                                    default:break;
+                            // prevent strange character overflow
+                            msg.style.overflowY = 'hidden';
+
+                            // detect youtube, twitch, bot
+                            if(nickNode.getElementsByClassName("fa-youtube").length) {
+                                msg.classList.add("ytMsg");
+                                if(getValue('userBlacklistYt').indexOf(nickNode.innerText.trim()) >= 0) {
+                                    msg.classList.add("blacklistMsg");
+                                    blacklist = true;
                                 }
-                                msg.classList.add("botMsg", botType);
-
-                            }
-                            specialNick = "botMsg";
-                        } else if(/^Gast\d{1,4}$/m.test(nickNode.innerText)) {
-                            msg.classList.add("guestMsg");
-                            specialNick = "guestMsg";
-                        }
-
-                        // hide filtered messages
-                        if(specialNick !== "" && !getValue("show" + specialNick.ucFirst())) {
-                            if(specialNick !== "botMsg" || getValue("filter" + botType.ucFirst())) {
-                               msg.classList.add("hide");
-                            }
-                        }
-
-                        // check against blacklist
-                        if(specialNick == "" && getValue('userBlacklist').indexOf(nickNode.innerText) >= 0) {
-                            msg.classList.add("blacklistMsg");
-                            blacklist = true;
-                        }
-
-                        if(blacklist && !getValue('showBlacklistMsg')) {
-                            msg.classList.add("hide");
-                        }
-
-                        // add click event for real users
-                        if(specialNick === "" || specialNick === "guestMsg") {
-                            nickNode.addEventListener("click", function(){addNickHandle(nickNode.innerText)}, false);
-                            nickNode.classList.add("hand");
-                            nickNode.title = "@" + nickNode.innerText + " einfügen";
-                        }
-
-                        // hightlight all messages from user
-                        let fullId = specialNick + nickNode.innerText.replace('"',"_");
-                        msg.dataset.user = fullId;
-                        msg.addEventListener("mouseover", function(){highlightMsgByNick(fullId, true)}, false);
-                        msg.addEventListener("mouseout", function(){highlightMsgByNick(fullId, false)}, false);
-
-                        // make nicknames slightly brighter if contrast is too low
-                        if(brightenUp) {
-                            var contrast = testContrast("rgb(10,10,10)",nickColor);
-                            var contrastThreshold = 80;
-
-                            if( contrast < contrastThreshold) {
-                                nickNode.style.color = pSBC((contrastThreshold - contrast)/100, nickColor);
-                            }
-                        }
-                    }
-
-                    var voteDetected = false;
-
-                    mutation.addedNodes.forEach(function(node, i) {
-
-                        // delete original node...
-                        if(mutation.target.contains(node)) {
-                            // under 80 messages
-                            mutation.target.removeChild(node);
-                        } else {
-                            // over 80 message
-                            while (chat.lastChild && chat.lastChild.nodeName !== "DIV") {
-                                chat.removeChild(chat.lastChild);
-                            }
-                        }
-
-                        // ..and create a new one
-                        if(node.nodeName === "#text") {
-                            // wrap text nodes in span container
-                            var wrapNode = createElement('span');
-
-                            // check for priority messages
-                            if(~node.data.indexOf("@" + setting.nick)) {
-                                setting.unreadPriority++;
-                                // play notification sound but only every 10th time in unfocused window
-                                if(getValue("notifyHandleSound") && setting.unreadPriority % 10 === 1 && setting.initDone) {
-                                    notify(notifyPriority);
-                                    // only notify once, if priority and normal notification is activated
-                                    notificationDone = true;
+                                specialNick = "ytMsg";
+                            } else if(nickNode.getElementsByClassName("fa-twitch").length) {
+                                msg.classList.add("twitMsg");
+                                if(getValue('userBlacklistTw').indexOf(nickNode.innerText.trim()) >= 0) {
+                                    msg.classList.add("blacklistMsg");
+                                    blacklist = true;
                                 }
-                            }
-
-                            // detect cut streams
-                            if(specialNick === "botMsg" && botType === "financeBot" && getValue("notifyOnCutStream") && node.data.match(/(.*) spendete .*€ für die Aktion '(Adam|Jana)! Herkommen! (Schneiden|Arbeiten)!!'! Aktion erfüllt!!!/) && setting.msgsLoaded) {
-                                GM_notification({
-                                    text:       "Einige Ehrenzuschauende haben die Arbeitsaktion voll gemacht!",
-                                    title:      "Ein Stream startet in Kürze!",
-                                    timeout:    10000,
-                                    image:      "https://skylinetv.live/wp-content/uploads/2019/07/favicon-32x32.png",
-                                });
-                            }
-
-                            var text = node.data.replace(/\<\/?div\>/gi," ").replace(/</g,"&lt;");
-
-                            text = text.replace("@" + setting.nick, '<span class="badge">' + setting.nick + '</span>');
-
-                            // highlight for scriptuser
-                            if(nickNode.innerText === 'Arno_Nuehm' ) {
-                                text = text.replace("@scriptuser","<span class=\"badge\">Scriptuser</span>");
-                            }
-
-                            // brighten up replay messages
-                            if(specialNick === 'replayMsg') {
-                                wrapNode.style = "color: #fff;";
-                            }
-
-                            // detect vote message ": 15"
-                            if(text.length > 2 && text.length < 5 && !voteDetected) {
-                                let num = parseInt(text.replace(": ",""));
-                                if(!isNaN(num) && num > 0 && num < 21) {
-                                    specialNick = "voteMsg";
-                                    msg.classList.add("voteMsg");
-                                    if(!getValue("showVoteMsg")) {
-                                        msg.classList.add("hide");
+                                specialNick = "twitMsg";
+                            } else if(msgNode.childNodes[0].classList.contains("fa-play-circle")) {
+                                msg.classList.add("replayMsg");
+                                specialNick = "replayMsg";
+                            } else if(nickNode.getElementsByClassName("fa-robot").length) {
+                                if(nickNode.innerText.match(/([^\s]*)\-B(?:\u00f6|o)t/)) {
+                                    switch(nickNode.innerText.match(/([^\s]*)\-B(?:\u00f6|o)t/)[1]) {
+                                        case "Finanz": botType = "financeBot"; break;
+                                        case "Aktions": botType = "actionBot"; break;
+                                        case "Veröffentlichungs": botType = "releaseBot"; break;
+                                        case "Musik": botType = "musicBot"; break;
+                                        case "Server": botType = "serverBot"; break;
+                                        case "Discord": botType = "discordBot"; break;
+                                        case "Hilfs": botType = "helperBot"; break;
+                                        case "Sieges": botType = "winnerBot"; break;
+                                        default:break;
                                     }
-                                    voteDetected = true;
+                                    msg.classList.add("botMsg", botType);
+
+                                }
+                                specialNick = "botMsg";
+                            } else if(/^Gast\d{1,4}$/m.test(nickNode.innerText)) {
+                                msg.classList.add("guestMsg");
+                                specialNick = "guestMsg";
+                            }
+
+                            // hide filtered messages
+                            if(specialNick !== "" && !getValue("show" + specialNick.ucFirst())) {
+                                if(specialNick !== "botMsg" || getValue("filter" + botType.ucFirst())) {
+                                    msg.classList.add("hide");
                                 }
                             }
 
-                            if(setting.nick == nickNode.innerText) {
-                                text = text.replace(/\B@([^\s]+)/g,"<span class=\"badge badgeLight\">$1</span>");
+                            // check against blacklist
+                            if(specialNick == "" && getValue('userBlacklist').indexOf(nickNode.innerText) >= 0) {
+                                msg.classList.add("blacklistMsg");
+                                blacklist = true;
                             }
 
-                            // basic markupSupport
-                            if(enableMarkup) {
-                                text = text.replace(/\b_([^_]+)_\b/g,"<i>$1</i>").replace(/\*([^\*g]+|[^\*]{2,})\*/g,"<strong>$1</strong>").replace(/~([^~]+)~/g,"<strike>$1</strike>");
+                            if(blacklist && !getValue('showBlacklistMsg')) {
+                                msg.classList.add("hide");
                             }
 
-                            var urlMatch = text.match(urlRegex);
+                            // add click event for real users
+                            if(specialNick === "" || specialNick === "guestMsg") {
+                                nickNode.addEventListener("click", function(){addNickHandle(nickNode.innerText)}, false);
+                                nickNode.classList.add("hand");
+                                nickNode.title = "@" + nickNode.innerText + " einfügen";
+                            }
 
-                            // make links clickable
-                            if(urlMatch) {
-                                // shorten if option set
-                                if(getValue("shortenLink")) {
-                                    text = text.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">$3</a>");
-                                } else {
-                                    text = text.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">" + urlMatch[0] + "</a>");
+                            // hightlight all messages from user
+                            let fullId = specialNick + nickNode.innerText.replace('"',"_");
+                            msg.dataset.user = fullId;
+                            msg.addEventListener("mouseover", function(){highlightMsgByNick(fullId, true)}, false);
+                            msg.addEventListener("mouseout", function(){highlightMsgByNick(fullId, false)}, false);
+
+                            // make nicknames slightly brighter if contrast is too low
+                            if(brightenUp) {
+                                var contrast = testContrast("rgb(10,10,10)",nickColor);
+                                var contrastThreshold = 80;
+
+                                if( contrast < contrastThreshold) {
+                                    nickNode.style.color = pSBC((contrastThreshold - contrast)/100, nickColor);
                                 }
                             }
+                        }
 
-                            // replace emote (upcoming feature, waiting for concession)
-                            Object.keys(emotes).forEach(function(emote) {
-                                var emoteRegex = new RegExp('\\b' + emote +'\\b','g');
-                                //text = text.replace(emoteRegex, '<img height="16" src="https://static-cdn.jtvnw.net/emoticons/v1/'+emotes[emote]+'/1.0">');
-                            });
+                        var voteDetected = false;
 
-                            // search for keywords
-                            var keywords = getValue('keywordList');
-                            //if(keywords.length > 0) {
-                            keywords.forEach(function(key){
-                                var keyReg = new RegExp('\\b' + key + '(?!\\<)\\b','g');
-                                if(keyReg.test(text)) {
+                        Array.from(msgNode.childNodes).forEach(function(node, x) {
+
+                            // ..and create a new one
+                            if(node.nodeName === "#text") {
+                                // wrap text nodes in span container
+                                var wrapNode = createElement('span');
+
+                                // check for priority messages
+                                if(~node.data.indexOf("@" + setting.nick)) {
                                     setting.unreadPriority++;
-                                    text = text.replace(keyReg,'<span class="badge">' + key + '</span>');
-
                                     // play notification sound but only every 10th time in unfocused window
-                                    if(getValue("notifyHandleSound") && setting.unreadPriority % 10 === 1 && !notificationDone && setting.initDone) {
+                                    if(getValue("notifyHandleSound") && setting.unreadPriority % 10 === 1 && setting.initDone) {
                                         notify(notifyPriority);
                                         // only notify once, if priority and normal notification is activated
                                         notificationDone = true;
                                     }
                                 }
-                            });
+
+                                // detect cut streams
+                                if(specialNick === "botMsg" && botType === "financeBot" && getValue("notifyOnCutStream") && node.data.match(/(.*) spendete .*€ für die Aktion '(Adam|Jana)! Herkommen! (Schneiden|Arbeiten)!!'! Aktion erfüllt!!!/) && setting.msgsLoaded) {
+                                    GM_notification({
+                                        text:       "Einige Ehrenzuschauende haben die Arbeitsaktion voll gemacht!",
+                                        title:      "Ein Stream startet in Kürze!",
+                                        timeout:    10000,
+                                        image:      "https://skylinetv.live/wp-content/uploads/2019/07/favicon-32x32.png",
+                                    });
+                                }
+
+                                var text = node.data.replace(/\<\/?div\>/gi," ").replace(/</g,"&lt;");
+
+                                text = text.replace("@" + setting.nick, '<span class="badge">' + setting.nick + '</span>');
+
+                                // highlight for scriptuser
+                                if(nickNode.innerText === 'Arno_Nuehm' ) {
+                                    text = text.replace("@scriptuser","<span class=\"badge\">Scriptuser</span>");
+                                }
+
+                                // brighten up replay messages
+                                if(specialNick === 'replayMsg') {
+                                    wrapNode.style = "color: #fff;";
+                                }
+
+                                // detect vote message ": 15"
+                                if(text.length > 2 && text.length < 5 && !voteDetected) {
+                                    let num = parseInt(text.replace(": ",""));
+                                    if(!isNaN(num) && num > 0 && num < 21) {
+                                        specialNick = "voteMsg";
+                                        msg.classList.add("voteMsg");
+                                        if(!getValue("showVoteMsg")) {
+                                            msg.classList.add("hide");
+                                        }
+                                        voteDetected = true;
+                                    }
+                                }
+
+                                if(setting.nick == nickNode.innerText) {
+                                    text = text.replace(/\B@([^\s]+)/g,"<span class=\"badge badgeLight\">$1</span>");
+                                }
+
+                                // basic markupSupport
+                                if(enableMarkup) {
+                                    text = text.replace(/\b_([^_]+)_\b/g,"<i>$1</i>").replace(/\*([^\*g]+|[^\*]{2,})\*/g,"<strong>$1</strong>").replace(/~([^~]+)~/g,"<strike>$1</strike>");
+                                }
+
+                                var urlMatch = text.match(urlRegex);
+
+                                // make links clickable
+                                if(urlMatch) {
+                                    // shorten if option set
+                                    if(getValue("shortenLink")) {
+                                        text = text.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">$3</a>");
+                                    } else {
+                                        text = text.replace(urlRegex,"<a href=\"" + (/https?/.test(urlMatch[0])?"":"http://") + ""+urlMatch[0]+"\" target=\"_blank\">" + urlMatch[0] + "</a>");
+                                    }
+                                }
+
+                                // replace emote (upcoming feature, waiting for concession)
+                                Object.keys(emotes).forEach(function(emote) {
+                                    var emoteRegex = new RegExp('\\b' + emote +'\\b','g');
+                                    //text = text.replace(emoteRegex, '<img height="16" src="https://static-cdn.jtvnw.net/emoticons/v1/'+emotes[emote]+'/1.0">');
+                                });
+
+                                // search for keywords
+                                var keywords = getValue('keywordList');
+                                //if(keywords.length > 0) {
+                                keywords.forEach(function(key){
+                                    var keyReg = new RegExp('\\b' + key + '(?!\\<)\\b','g');
+                                    if(keyReg.test(text)) {
+                                        setting.unreadPriority++;
+                                        text = text.replace(keyReg,'<span class="badge">' + key + '</span>');
+
+                                        // play notification sound but only every 10th time in unfocused window
+                                        if(getValue("notifyHandleSound") && setting.unreadPriority % 10 === 1 && !notificationDone && setting.initDone) {
+                                            notify(notifyPriority);
+                                            // only notify once, if priority and normal notification is activated
+                                            notificationDone = true;
+                                        }
+                                    }
+                                });
 
 
-                            // highlight my user name
-                            wrapNode.innerHTML = text;
-                            msg.appendChild(wrapNode);
-                        } else if(node.nodeName !== "BR") {
-                            msg.appendChild(node);
+                                // highlight my user name
+                                wrapNode.innerHTML = text;
+                                msg.appendChild(wrapNode);
+                            } else if(node.nodeName !== "BR") {
+                                msg.appendChild(node);
+                            }
+                        });
+
+                        // delete original message
+                        while (chat.lastChild && !chat.lastChild.classList.contains('processed')) {
+                            chat.removeChild(chat.lastChild);
                         }
-                    });
 
-                    // append our message container
-                    mutation.target.appendChild(msg);
 
-                    // delete old messages
-                    if(chat.querySelectorAll('div').length > 500) {
-                        chat.removeChild(chat.firstChild);
-                    }
+                        // append our message container
+                        chat.appendChild(msg);
 
-                    if(d.visibilityState == "hidden" && setting.msgsLoaded && setting.initDone && !blacklist && (specialNick === "" || getValue("show" + specialNick.ucFirst()) || (specialNick === "botMsg" && !getValue("filter" + botType.ucFirst())))) {
-                        setting.unread++;
-
-                        // play notification sound but only every 20th time in unfocused window and if priority sound hasn't been played
-                        if(getValue("notifySound") && setting.unread % 20 === 1 && !notificationDone && setting.initDone) {
-                            notify(notifyNormal);
+                        // delete old messages
+                        if(chat.querySelectorAll('div').length > 500) {
+                            chat.removeChild(chat.firstChild);
                         }
 
-                        d.title = "(" + setting.unread.toString() + (setting.unreadPriority > 0 ? ("|*" + setting.unreadPriority.toString()):"") + ") - " + setting.origTitle;
+                        if(d.visibilityState == "hidden" && setting.msgsLoaded && setting.initDone && !blacklist && (specialNick === "" || getValue("show" + specialNick.ucFirst()) || (specialNick === "botMsg" && !getValue("filter" + botType.ucFirst())))) {
+                            setting.unread++;
+
+                            // play notification sound but only every 20th time in unfocused window and if priority sound hasn't been played
+                            if(getValue("notifySound") && setting.unread % 20 === 1 && !notificationDone && setting.initDone) {
+                                notify(notifyNormal);
+                            }
+
+                            d.title = "(" + setting.unread.toString() + (setting.unreadPriority > 0 ? ("|*" + setting.unreadPriority.toString()):"") + ") - " + setting.origTitle;
+                        }
                     }
                 }
             });
