@@ -1,4 +1,4 @@
-# Most features were integrated into the main website.
+# Most features were or will be integrated into the main website. -> This Project is archived.
 
 # Boost for Skylinetv.live
 
