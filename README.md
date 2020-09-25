@@ -1,4 +1,4 @@
-# Most features were intergretad into the main website.
+# Most features were integrated into the main website.
 
 # Boost for Skylinetv.live
 
