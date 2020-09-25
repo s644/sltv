@@ -1,3 +1,5 @@
+# Most features were intergretad into the main website.
+
 # Boost for Skylinetv.live
 
 Most features are only for __registrated__ users. Create a free account at: https://skylinetv.live/mein-konto/
